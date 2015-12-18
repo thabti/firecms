@@ -1,6 +1,7 @@
 {
   "watch": [
-    "**/*.{js, json, ejs}"
+    "**/*.{js, json, jsx}",
+    "views/**/*"
   ],
   "ignore": [
     "node_modules/**/*"
@@ -9,5 +10,5 @@
     "NODE_ENV": "development",
     "localDev": true
   },
-  "ext": "js jsx json hbs"
+  "ext": "js jsx json jsx"
 }
