@@ -5,7 +5,7 @@ export default class Index extends Component {
   render() {
     return (
       <Layout title={this.props.title}>
-        <div>Hello sabeur</div>
+        <div>Hello sabeur thabti</div>
 
         <form method="POST" action="/save">
           <div className="form-group">
