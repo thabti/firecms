@@ -22,12 +22,11 @@ module.exports = function (app) {
   app.get('/abc', function (req, res) {
     var q = req.query.year || '2016';
     console.log(q)
-    store.dispatch(saveData({"year": q }));
     res.end("done", store)
   });
 
-  // app.get('/post', (req, res) {
-  //
-  // });
-
+  app.post('/save', function (req, res) {
+      store.dispatch(saveData(req.body));
+    res.json({"status": "done"})
+  });
 };
