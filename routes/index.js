@@ -7,26 +7,26 @@ const store = createStoreWithMiddleware(reducer);
 
 module.exports = function (app) {
 
+  app.get('/new', function (req, res) {
+    res.render('main');
+  })
+
+
   app.get('/', function (req, res) {
     var isDev = process.env.NODE_ENV !== 'production'
 
     store.subscribe(() =>
       console.log(store.getState())
     )
-    var data = store.getState().getData.links;
+    var data = store.getState().dataSaved;
     res.render('main', {
-      year: JSON.stringify(data.year)
+      dataSaved: JSON.stringify(data)
     });
   });
 
-  app.get('/abc', function (req, res) {
-    var q = req.query.year || '2016';
-    console.log(q)
-    res.end("done", store)
-  });
-
   app.post('/save', function (req, res) {
+    console.log(req.body)
       store.dispatch(saveData(req.body));
-    res.json({"status": "done"})
+      res.redirect('/');
   });
 };

@@ -1,14 +1,13 @@
 {
   "watch": [
-    "**/*.{js, json, hbs}"
+    "**/*.{js, json, ejs}"
   ],
   "ignore": [
-    "build/*",
     "node_modules/**/*"
   ],
   "env": {
     "NODE_ENV": "development",
     "localDev": true
   },
-  "ext": "js jsx json yaml handlebars hbs"
+  "ext": "js jsx json hbs"
 }
