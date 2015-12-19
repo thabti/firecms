@@ -35,11 +35,6 @@ export function fetchData(limit = 0) {
     }, (err) => {
       console.error('Firebase!', err);
     })
-    //
-    // , function(snapshot) {
-    //   );
-    // }, function (errorObject) {
-    //   console.log("The read failed: " + errorObject.code);
-    // });
+    
   }
 }
