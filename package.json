@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/parallelshell './node_modules/.bin/nodemon --harmony index.js'"
+    "start": "./node_modules/.bin/parallelshell './node_modules/.bin/nodemon --harmony index.js'",
+    "start:js": "./node_modules/.bin/babel assets/app-babel.js -o assets/app.min.js"
   },
   "repository": {
     "type": "git",
@@ -35,11 +36,14 @@
     "react": "^0.14.3",
     "react-dom": "^0.14.3",
     "react-redux": "^4.0.1",
+    "react-remarkable": "^1.1.1",
     "redux": "^3.0.5",
     "redux-thunk": "^1.0.2",
+    "remarkable": "^1.6.1",
     "slug": "^0.9.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.3.17",
     "nodemon": "^1.8.1"
   },
   "engines": {

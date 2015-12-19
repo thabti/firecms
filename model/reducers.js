@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux';
-import { GET_DATA } from './actions.js';
+import { GET_DATA, SET_DATA } from './actions.js';
 
 function dataSaved(state = {}, action = {}) {
     switch (action.type) {
-        case GET_DATA:
+        case SET_DATA:
             return {
                 ...action.data
             };
@@ -12,4 +12,15 @@ function dataSaved(state = {}, action = {}) {
     }
 }
 
-export default combineReducers({dataSaved});
+function getData(state = {}, action = {}) {
+    switch (action.type) {
+        case GET_DATA:
+            return {
+                items: action.items
+            };
+        default:
+            return state;
+    }
+}
+
+export default combineReducers({dataSaved, getData});

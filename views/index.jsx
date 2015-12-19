@@ -7,7 +7,7 @@ export default class Index extends Component {
       <Layout title={this.props.title}>
         <div>Hello sabeur thabti</div>
 
-        <form method="POST" action="/save">
+        <form method="post" action="/save">
           <div className="form-group">
             <label htmlFor="name">Title</label>
             <input
@@ -17,12 +17,10 @@ export default class Index extends Component {
               name="title"
               placeholder="Enter title" />
             <label htmlFor="name">Description</label>
-            <input
-              type="text"
-              className="form-control"
-              id="name"
-              name="description"
-              placeholder="Enter Description" />
+
+            <textarea    className="form-control" rows="4" cols="50"   name="description">
+            </textarea>
+
           </div>
           <input
             className="btn btn-default"
@@ -30,9 +28,6 @@ export default class Index extends Component {
         </form>
 
         <div>
-          <p>saved Data</p>
-          {this.props.dataSaved}
-
         </div>
       </Layout>
     );

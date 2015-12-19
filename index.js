@@ -1,10 +1,12 @@
 require("babel-core/register");
+require("babel-polyfill");
 
 
 // babel goodness
 var express = require('express');
 var app = module.exports = express();
 app.set('port', (process.env.PORT || 5000));
+
 // Error
 app.use(function(err,req,res,next){
   if(err){
@@ -12,6 +14,14 @@ app.use(function(err,req,res,next){
   }
   next();
 });
+
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+    next();
+});
+
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jsx');
