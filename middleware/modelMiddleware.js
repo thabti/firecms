@@ -1,13 +1,14 @@
 
 import { applyMiddleware, createStore, bindActionCreators } from 'redux';
-const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
 import reducer from '../model/reducers.js';
 import * as actions from '../model/actions.js';
 import thunk from 'redux-thunk';
-const store = createStoreWithMiddleware(reducer);
-var action = bindActionCreators(actions, store.dispatch);
-store.subscribe(() => console.log('store ', JSON.stringify(store.getState())))
 
+const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
+const store = createStoreWithMiddleware(reducer);
+const action = bindActionCreators(actions, store.dispatch);
+
+// store.subscribe(() => console.log('store 1', JSON.stringify(store.getState())))
 
 module.exports = function(req, res, next) {
   console.log('Time:', Date.now());

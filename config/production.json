@@ -1,0 +1,6 @@
+{
+  "port": 5000,
+  "firebase": {
+    "url": "https://stylecouncil.firebaseio.com/"
+  }
+}

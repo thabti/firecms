@@ -11,7 +11,7 @@ export default class Layout extends Component {
 
         <body>
           {this.props.children}
-          <script src="/assets/app.js"></script>
+          <script src="/assets/app-babel.js"></script>
         </body>
 
 

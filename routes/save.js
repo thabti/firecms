@@ -8,6 +8,8 @@ export default function(app) {
 
       let{title, description} = req.body;
 
+      console.log(req.body)
+
       let results = {
         title: title,
         description: description

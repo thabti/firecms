@@ -1,16 +1,15 @@
 require("babel-core/register");
 require("babel-polyfill");
+var config = require('config');
 // babel goodness
 var express = require('express');
 var app = module.exports = express();
-app.set('port', (process.env.PORT || 5000));
+app.set('config', config)
+app.set('port', (process.env.PORT || app.get('config').port));
 // middleware
-var error = require('./middleware/errorMiddleware.js');
-var model = require('./middleware/modelMiddleware.js');
-console.log(error)
-app.use(error);
-app.use(model);
-// app.use(require('./middleware/modelMiddleware.js')());
+app.use(require('./middleware/configMiddleware.js')(config))
+app.use(require('./middleware/errorMiddleware.js'));
+app.use(require('./middleware/modelMiddleware.js'));
 var bodyParser = require('body-parser')
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -26,5 +25,5 @@ app.use('/assets', express.static('./assets'));
 require('./routes/index.js')(app);
 // port
 app.listen(app.get('port'), function () {
-  console.log('running on port ' + app.get('port'))
+  console.log('running on port ' + app.get('port') + '\n' + app.get('config'))
 });

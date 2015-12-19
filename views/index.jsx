@@ -7,7 +7,7 @@ export default class Index extends Component {
       <Layout title={this.props.title}>
         <div>Hello sabeur thabti</div>
 
-        <form method="post" action="/save">
+        <form method="post" action="/save" encType="multipart/form-data">
           <div className="form-group">
             <label htmlFor="name">Title</label>
             <input
@@ -22,11 +22,14 @@ export default class Index extends Component {
             </textarea>
 
           </div>
+          <input type="file" name="file" />
+
           <input
             className="btn btn-default"
             type="submit" />
         </form>
 
+    
         <div>
         </div>
       </Layout>
