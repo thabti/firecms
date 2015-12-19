@@ -9,11 +9,8 @@ const store = createStoreWithMiddleware(reducer);
 const action = bindActionCreators(actions, store.dispatch);
 
 // store.subscribe(() => console.log('store 1', JSON.stringify(store.getState())))
-
 module.exports = function(req, res, next) {
-  console.log('Time:', Date.now());
   res.locals.store = store;
   res.locals.action = action;
-
   next();
 }
