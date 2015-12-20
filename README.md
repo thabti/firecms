@@ -1,5 +1,6 @@
 # firecms
 Express + Firebase CMS
 
-# Aim
-A basic CMS where everything is JSON.
+# Aim 
+A personal spike into building a CMS, using firebase and reason to practice node. 
+
