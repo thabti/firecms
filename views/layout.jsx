@@ -6,7 +6,6 @@ export default class Layout extends Component {
       <html>
         <head>
           <title>{this.props.title}</title>
-          <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"></link>
         </head>
 
         <body>

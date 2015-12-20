@@ -1,6 +1,6 @@
 {
   "watch": [
-    "**/*.{js, json, jsx}",
+    "**/*.{js, json, jsx, yaml}",
     "views/**/*"
   ],
   "ignore": [
@@ -10,5 +10,5 @@
     "NODE_ENV": "development",
     "localDev": true
   },
-  "ext": "js jsx json jsx"
+  "ext": "js jsx json jsx yaml"
 }
