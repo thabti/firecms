@@ -1,6 +1,12 @@
-# firecms
+# Firecms
 Express + Firebase CMS
 
-# Aim 
-A personal spike into building a CMS, using firebase and reason to practice node. 
+# What is Firecms
+Firecms is a firebase powered CMS, that aims to be a simple and basic CMS application for single purpose usage. 
+
+## tech stach
+
+- React (server side only)
+- ExpressJS
+- Firebase (DB)
 
