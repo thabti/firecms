@@ -2,7 +2,7 @@
 Express + Firebase CMS
 
 # What is Firecms
-Firecms is a firebase powered CMS, that aims to be a simple and basic CMS application for single purpose usage. 
+Firecms is a firebase powered CMS.
 
 ## tech stack
 
