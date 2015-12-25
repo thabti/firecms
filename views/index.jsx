@@ -9,7 +9,7 @@ export default class Index extends Component {
     return (
       <Layout title={this.props.title}>
         <form method="post" action="/save">
-              <FieldsCreator fields={config.fields}/>
+              <FieldsCreator fields={config.fields.main}/>
         </form>
         <div>
         </div>
