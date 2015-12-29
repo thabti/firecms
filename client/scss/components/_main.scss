@@ -2,7 +2,10 @@
   border: 2px solid black;
   &.fire-cms__main--left {
     @include span-columns(6);
+    @include omega();
     float: left;
+      @include shift(1 of 12);
+      
   }
 
 }
