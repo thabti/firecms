@@ -1,0 +1,5 @@
+.fire-cms__header{
+  @include span-columns(12);
+  background-color: pink;
+  margin-bottom: 10px;
+}

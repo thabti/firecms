@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./node_modules/.bin/parallelshell './node_modules/.bin/nodemon --harmony index.js'",
-    "start:js": "./node_modules/.bin/babel assets/app-babel.js -o assets/app.min.js"
+    "build": "./node_modules/.bin/webpack --config client/webpack.config.js --progress --colors",
+    "build:watch": "./node_modules/.bin/webpack --config client/webpack.config.js --progress --colors --watch"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
     "babel-preset-stage-3": "^6.3.13",
     "body-parser": "^1.14.2",
     "config": "^1.17.1",
+    "elemental": "^0.5.10",
     "express": "^4.13.3",
     "express-react-views": "^0.9.0",
     "firebase": "^2.3.2",
@@ -36,6 +38,7 @@
     "multer": "^1.1.0",
     "parallelshell": "^2.0.0",
     "react": "^0.14.3",
+    "react-addons-css-transition-group": "^0.14.3",
     "react-dom": "^0.14.3",
     "react-redux": "^4.0.1",
     "react-remarkable": "^1.1.1",
@@ -45,8 +48,20 @@
     "slug": "^0.9.1"
   },
   "devDependencies": {
+    "assets-webpack-plugin": "^3.0.0",
+    "autoprefixer-loader": "^3.1.0",
     "babel-cli": "^6.3.17",
-    "nodemon": "^1.8.1"
+    "babel-loader": "^6.2.0",
+    "css-loader": "^0.19.0",
+    "extract-text-webpack-plugin": "^0.8.2",
+    "less": "^2.5.3",
+    "node-neat": "^1.7.2",
+    "nodemon": "^1.8.1",
+    "sass-loader": "^3.0.0",
+    "source-map-loader": "^0.1.5",
+    "style-loader": "^0.12.4",
+    "webpack": "^1.12.9",
+    "node-sass": "*"
   },
   "engines": {
     "node": ">=0.12"

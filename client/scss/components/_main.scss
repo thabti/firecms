@@ -1,0 +1,8 @@
+.fire-cms__main {
+  border: 2px solid black;
+  &.fire-cms__main--left {
+    @include span-columns(6);
+    float: left;
+  }
+
+}

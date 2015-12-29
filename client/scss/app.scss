@@ -1,0 +1,7 @@
+@import 'common';
+
+// components
+@include wrap {
+  @import "components/main";
+  @import "components/header";
+}

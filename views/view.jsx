@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import Helpers from './helpers.js';
+import Layout from './layout.jsx';
 var Remarkable = require('remarkable');
 var md = new Remarkable({linkify: true, html: true});
 
@@ -19,9 +20,12 @@ export default class View extends Component {
     }) : '';
 
     return (
-      <ul>
+      <Layout title="view items">
+        <ul>
         {listItem}
       </ul>
-    );
-  }
+    </Layout>
+
+  );
+}
 }
