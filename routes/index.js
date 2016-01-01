@@ -13,7 +13,6 @@ module.exports = function (app) {
 
   app.get('/', function(req, res) {
     let config = res.locals.config;
-    console.log(config.fields.main)
     res.render('index', {
       title: "Fire CMS",
       config

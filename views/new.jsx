@@ -15,11 +15,11 @@ export default class Index extends Component {
       <Layout title={this.props.title}>
         <Form method="post" action={action} id="form1">
           <FormField label="Title" htmlFor="title">
-            <FormInput autofocus={true} type="text" placeholder="Enter title" name="title" value={editTitle} />
+            <FormInput autofocus={true} type="text" placeholder="Enter title" name="title" defaultValue={editTitle} />
           </FormField>
 
           <FormField label="Description" htmlFor="description">
-            <FormInput placeholder="Textarea" multiline name="description" value={editDescription} />
+            <FormInput placeholder="Textarea" multiline name="description" defaultValue={editDescription} />
           </FormField>
 
           <Button type="primary"  submit={true} form="form1" >Submit</Button>

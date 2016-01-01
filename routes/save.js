@@ -26,7 +26,15 @@ export default function(app) {
     res.redirect('/view');
   });
 
-  app.post('/edit/:id', function (req, res) {
+  app.get('/delete/:id', async function(req, res) {
+    var id = req.params.id;
+    var action = res.locals.action;
+    await action.remove(id);
+    res.redirect('/view');
+  });
+  
+
+  app.post('/edit/:id', async function (req, res) {
     var id = req.params.id;
     var store = res.locals.store;
     var action = res.locals.action;
@@ -39,7 +47,8 @@ export default function(app) {
       title: title,
       description: description
     }
-    action.update(id, results);
+
+    await action.update(id, results);
     res.redirect('/view');
   });
 

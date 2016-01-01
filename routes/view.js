@@ -19,20 +19,14 @@ export default function(app) {
     res.end(JSON.stringify(items));
   });
 
-  app.get('/delete/:id', async function(req, res) {
-    var id = req.params.id;
-    var action = res.locals.action;
-    await action.remove(id);
-    res.end('33')
-  });
+
 
   app.get('/edit/:id', async function(req, res) {
     var id = req.params.id;
     var store = res.locals.store;
     var action = res.locals.action;
     await action.fetchData();
-    var items = store.getState().getData.items.reverse()[id];
-    console.log(items)
+    var items = store.getState().getData.items[id];
     res.render('new', {
       title: "Fire CMS",
       data: items,
