@@ -34,3 +34,26 @@ export function fetchData(limit = 0) {
 
   }
 }
+
+export function remove(key) {
+  return async function thunk(dispatch) {
+    firebase.child(key).remove().then((data) => {
+      dispatch(null);
+      console.log(data)
+    }, (err) => {
+      console.error('Firebase!', err);
+    });
+  }
+}
+
+export function update(key, data) {
+  console.log(key, data, '000')
+  return async function thunk(dispatch) {
+    firebase.child(key).update(data).then((data) => {
+      dispatch(dataSaved(data));
+      console.log(data)
+    }, (err) => {
+      console.error('Firebase!', err);
+    });
+  }
+}

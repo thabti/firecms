@@ -1,11 +1,15 @@
 .fire-cms__main {
-  border: 2px solid black;
+  // border: 2px solid black;
   &.fire-cms__main--left {
     @include span-columns(6);
     @include omega();
     float: left;
       @include shift(1 of 12);
-      
+
+  }
+
+  .fire-cms__icon-link {
+    text-decoration: none;  
   }
 
 }

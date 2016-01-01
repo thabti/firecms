@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/parallelshell './node_modules/.bin/nodemon --harmony index.js'",
+    "start": "./node_modules/.bin/parallelshell 'npm run build:watch' './node_modules/.bin/nodemon --harmony index.js'",
     "build": "./node_modules/.bin/webpack --config client/webpack.config.js --progress --colors",
     "build:watch": "./node_modules/.bin/webpack --config client/webpack.config.js --progress --colors --watch"
   },
