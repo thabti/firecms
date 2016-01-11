@@ -1,13 +1,12 @@
 import React, { Component, PropTypes } from 'react';
-import Layout from './layout'
-import FieldsCreator from './components/fieldsCreator';
+import Layout from '..//layout'
 import { Button, Alert, Form, FormField, FormInput, Checkbox, Col, DemoBox, Row} from 'elemental';
 export default class Index extends Component {
 
   render() {
     let {config, title, data, id, edit} = this.props;
 
-    var action = edit ? `/edit/${id}` : '/save';
+    var action = edit ? `/location/edit/${id}` : '/location/save';
     var editDescription = edit ? data.description : '';
     var editTitle = edit ? data.title : '';
 

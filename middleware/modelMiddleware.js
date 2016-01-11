@@ -1,7 +1,7 @@
 
 import { applyMiddleware, createStore, bindActionCreators } from 'redux';
-import reducer from '../model/reducers.js';
-import * as actions from '../model/actions.js';
+import reducer from '../model/reducers/reducers.js';
+import * as actions from '../model/actions/actions.js';
 import thunk from 'redux-thunk';
 
 const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);

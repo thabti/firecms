@@ -1,15 +1,11 @@
 
 // base routes
-import view from './view.js';
-import save from './save.js';
-
+import member from './member/index.js';
+import location from './locations/index.js';
 
 module.exports = function (app) {
-// console.log(app.get('config') ,23434)
-// console.log(res.locals.config)
-
-  view(app);
-  save(app)
+  member(app);
+  location(app);
 
   app.get('/', function(req, res) {
     let config = res.locals.config;
@@ -17,5 +13,17 @@ module.exports = function (app) {
       title: "Fire CMS",
       config
     });
-  })
+  });
+
+  app.get('/api', async function(req, res) {
+    var store = res.locals.store;
+    var action = res.locals.action;
+    await action.fetchData();
+    var items = store.getState().getData.items;
+    console.log(items)
+    res.end(JSON.stringify(items));
+  });
+
+
+
 };

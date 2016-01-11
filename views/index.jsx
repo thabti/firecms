@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react';
 import Layout from './layout'
-import FieldsCreator from './components/fieldsCreator';
 import {
   Button,
   Glyph

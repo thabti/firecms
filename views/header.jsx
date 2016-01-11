@@ -10,8 +10,9 @@ export default class Header extends Component {
         <ul className="fire-cms__nav">
 
           <li className="fire-cms__nav--item"><Glyph icon="home" /> <a href="/" className="">Home</a></li>
-          <li className="fire-cms__nav--item"><Glyph icon="pencil"/> <a href="/new" className="">New</a></li>
-          <li className="fire-cms__nav--item"><Glyph icon="list-unordered"/> <a href="/view" className="">posts</a></li>
+          <li className="fire-cms__nav--item"><Glyph icon="pencil"/> <a href="/member/new" className="">New Member</a></li>
+          <li className="fire-cms__nav--item"><Glyph icon="pencil"/> <a href="/location/new" className="">New Location</a></li>
+          <li className="fire-cms__nav--item"><Glyph icon="list-unordered"/> <a href="/member/view" className="">posts</a></li>
           <li className="fire-cms__nav--item"><Glyph icon="person"/> <a href="/account" className="">Account</a></li>
         </ul>
       </div>
