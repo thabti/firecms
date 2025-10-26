@@ -1,7 +1,7 @@
 import type { StorageAdapter, StorageType } from "@/types/storage";
-import { FirebaseAdapter } from "./firebase-adapter";
 import { JSONAdapter } from "./json-adapter";
 import { SQLiteAdapter } from "./sqlite-adapter";
+import { PostgresAdapter } from "./postgres-adapter";
 
 let adapterInstance: StorageAdapter | null = null;
 
@@ -13,18 +13,23 @@ export async function getStorageAdapter(): Promise<StorageAdapter> {
     return adapterInstance;
   }
 
-  const storageType = (process.env.STORAGE_TYPE as StorageType) || "firebase";
+  const storageType = (process.env.STORAGE_TYPE as StorageType) || "json";
   const dataDir = process.env.DATA_DIR || "./data";
 
   switch (storageType) {
-    case "firebase":
-      adapterInstance = new FirebaseAdapter();
-      break;
     case "json":
       adapterInstance = new JSONAdapter(dataDir);
       break;
     case "sqlite":
       adapterInstance = new SQLiteAdapter(dataDir);
+      break;
+    case "postgres":
+      // Support both DATABASE_URL (Neon/Vercel style) and individual params
+      const connectionString =
+        process.env.DATABASE_URL ||
+        process.env.POSTGRES_URL ||
+        undefined;
+      adapterInstance = new PostgresAdapter(connectionString);
       break;
     default:
       throw new Error(`Unsupported storage type: ${storageType}`);
@@ -45,4 +50,4 @@ export async function resetStorageAdapter(): Promise<void> {
 }
 
 // Export adapters for direct use
-export { FirebaseAdapter, JSONAdapter, SQLiteAdapter };
+export { JSONAdapter, SQLiteAdapter, PostgresAdapter };

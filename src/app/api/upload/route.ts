@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
 import sharp from "sharp";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
 
 // Image size configurations
 const IMAGE_SIZES = {
@@ -40,6 +41,12 @@ export async function POST(request: NextRequest) {
     const metadata = await sharp(buffer).metadata();
     const originalFormat = metadata.format || "jpeg";
 
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = join(process.cwd(), "public", "uploads", "images");
+    if (!existsSync(uploadsDir)) {
+      await mkdir(uploadsDir, { recursive: true });
+    }
+
     // Object to store all URLs
     const urls: Record<string, string> = {};
 
@@ -49,14 +56,9 @@ export async function POST(request: NextRequest) {
       .jpeg({ quality: 90, progressive: true })
       .toBuffer();
 
-    const originalRef = ref(
-      storage,
-      `images/${baseFilename}.${originalFormat}`
-    );
-    await uploadBytes(originalRef, originalOptimized, {
-      contentType: `image/${originalFormat}`,
-    });
-    urls.original = await getDownloadURL(originalRef);
+    const originalPath = join(uploadsDir, `${baseFilename}.${originalFormat}`);
+    await writeFile(originalPath, originalOptimized);
+    urls.original = `/uploads/images/${baseFilename}.${originalFormat}`;
 
     // Generate and upload optimized sizes
     for (const [sizeName, sizeConfig] of Object.entries(IMAGE_SIZES)) {
@@ -70,14 +72,9 @@ export async function POST(request: NextRequest) {
           .jpeg({ quality: 85, progressive: true })
           .toBuffer();
 
-        const sizeRef = ref(
-          storage,
-          `images/${baseFilename}_${sizeName}.jpg`
-        );
-        await uploadBytes(sizeRef, resizedBuffer, {
-          contentType: "image/jpeg",
-        });
-        urls[sizeName] = await getDownloadURL(sizeRef);
+        const sizePath = join(uploadsDir, `${baseFilename}_${sizeName}.jpg`);
+        await writeFile(sizePath, resizedBuffer);
+        urls[sizeName] = `/uploads/images/${baseFilename}_${sizeName}.jpg`;
       } catch (error) {
         console.error(`Error creating ${sizeName} size:`, error);
         // Continue with other sizes even if one fails

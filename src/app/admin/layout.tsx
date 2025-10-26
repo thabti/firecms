@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LayoutDashboard, FileText } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -7,33 +6,35 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/admin" className="flex items-center space-x-2">
-              <LayoutDashboard className="w-6 h-6 text-blue-600" />
-              <span className="text-xl font-bold">FireCMS Admin</span>
-            </Link>
-            <div className="flex items-center space-x-6">
-              <Link
-                href="/admin"
-                className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Pages</span>
+    <div>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="container mx-auto max-w-7xl">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center gap-8">
+              <Link href="/admin" className="hover:no-underline">
+                <h1 className="text-xl font-semibold text-blue-600">
+                  FireCMS Admin
+                </h1>
               </Link>
-              <Link
-                href="/"
-                className="text-gray-700 hover:text-blue-600 transition-colors"
-              >
-                View Site
-              </Link>
+              <nav className="flex gap-6">
+                <Link href="/admin" className="text-gray-600 hover:text-blue-600 font-medium">
+                  Pages
+                </Link>
+                <Link href="/admin/media" className="text-gray-600 hover:text-blue-600 font-medium">
+                  Media
+                </Link>
+                <Link href="/admin/settings" className="text-gray-600 hover:text-blue-600 font-medium">
+                  Settings
+                </Link>
+              </nav>
             </div>
+            <Link href="/" className="text-gray-600 hover:text-blue-600">
+              View Site
+            </Link>
           </div>
         </div>
-      </nav>
-      <main className="container mx-auto px-4 py-8">{children}</main>
+      </div>
+      <main>{children}</main>
     </div>
   );
 }

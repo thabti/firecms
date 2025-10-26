@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
 
 export default function GlobalError({
   error,
@@ -18,29 +16,55 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div className="min-h-screen bg-white flex items-center justify-center px-4">
-          <div className="max-w-md w-full text-center">
-            <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-6" />
-
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "1rem"
+        }}>
+          <div style={{ maxWidth: "28rem", width: "100%", textAlign: "center" }}>
+            <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>
               Application Error
             </h1>
 
-            <p className="text-gray-600 mb-8">
+            <p style={{ color: "#6b7280", marginBottom: "2rem" }}>
               {error.message || "An unexpected error occurred. Please try refreshing the page."}
             </p>
 
-            <div className="flex gap-3 justify-center">
-              <Button onClick={reset}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "center" }}>
+              <button
+                onClick={reset}
+                style={{
+                  padding: "0.5rem 1rem",
+                  backgroundColor: "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "0.375rem",
+                  cursor: "pointer",
+                  fontWeight: "500"
+                }}
+              >
                 Try again
-              </Button>
-              <Button variant="outline" onClick={() => window.location.href = "/"}>
+              </button>
+              <button
+                onClick={() => window.location.href = "/"}
+                style={{
+                  padding: "0.5rem 1rem",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.375rem",
+                  cursor: "pointer",
+                  fontWeight: "500"
+                }}
+              >
                 Go to Homepage
-              </Button>
+              </button>
             </div>
 
             {error.digest && (
-              <p className="text-xs text-gray-500 mt-6">
+              <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginTop: "1.5rem" }}>
                 Error ID: {error.digest}
               </p>
             )}

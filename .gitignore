@@ -48,3 +48,6 @@ lib-cov
 .grunt
 .lock-wscript
 build/Release
+
+# Uploaded images
+public/uploads/

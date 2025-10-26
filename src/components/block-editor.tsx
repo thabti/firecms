@@ -126,7 +126,7 @@ export function BlockEditor({
           </div>
         );
       case "heading":
-        const HeadingTag = `h${block.level}` as keyof JSX.IntrinsicElements;
+        const HeadingTag = `h${block.level}` as keyof React.JSX.IntrinsicElements;
         return (
           <div className="prose max-w-none">
             <HeadingTag className="font-bold">{block.content}</HeadingTag>

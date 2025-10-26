@@ -56,7 +56,7 @@ export class JSONAdapter implements StorageAdapter {
           throw error;
         }
       }
-      console.log(`JSON adapter initialized at ${this.dbPath}`);
+      // Adapter initialized successfully (logging removed to reduce noise)
     } catch (error) {
       console.error("Failed to initialize JSON adapter:", error);
       throw error;
@@ -198,7 +198,6 @@ export class JSONAdapter implements StorageAdapter {
     const section = this.db.pages[pageIndex].sections[sectionIndex];
     const newBlock: Block = {
       id: crypto.randomUUID(),
-      type: blockData.type,
       order: blockData.order ?? section.blocks.length,
       ...blockData,
     } as Block;

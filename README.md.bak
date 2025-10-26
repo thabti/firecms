@@ -69,6 +69,7 @@ firecms/
 │   ├── lib/
 │   │   ├── adapters/          # Storage adapters
 │   │   │   ├── index.ts       # Adapter factory
+│   │   │   ├── firebase-adapter.ts   # Firebase implementation
 │   │   │   ├── postgres-adapter.ts   # PostgreSQL implementation
 │   │   │   ├── sqlite-adapter.ts     # SQLite implementation
 │   │   │   ├── json-adapter.ts       # JSON file implementation
@@ -79,6 +80,8 @@ firecms/
 │   │   │       ├── schema.ts
 │   │   │       └── serializers.ts
 │   │   ├── api-utils.ts       # API versioning & responses
+│   │   ├── db.ts              # Legacy Firestore (deprecated)
+│   │   ├── firebase.ts        # Firebase config
 │   │   └── utils.ts           # Utility functions
 │   └── types/
 │       ├── index.ts           # Core types
@@ -100,6 +103,7 @@ firecms/
 
 - Node.js 18+
 - pnpm (recommended) or npm
+- Firebase project
 
 ### Installation
 
@@ -167,6 +171,23 @@ DATA_DIR=./data
 ```
 
 Perfect for quick prototyping. Data is stored in `./data/cms-data.json`.
+
+### Option D: Firebase (Alternative for Production)
+
+1. Create a Firebase project at https://console.firebase.google.com
+2. Enable Firestore Database and Firebase Storage
+3. Get your Firebase configuration
+4. Uncomment the Firebase section in `.env.local` and add your credentials:
+
+```env
+STORAGE_TYPE=firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
 
 4. **Run the development server**
 
@@ -340,13 +361,48 @@ git commit -m "Backup CMS data"
 
 **Note:** JSON storage is not recommended for concurrent writes or high-traffic production sites.
 
+#### Firebase Storage
+
 Perfect for:
 - Production deployments
 - Scalable applications
 - Real-time capabilities
 - Multi-region hosting
 
+**Setup:**
+
+Requires Firebase project configuration (see installation steps above).
+
+**Features:**
+- Unlimited scalability
+- Real-time synchronization
+- Multi-region replication
+- Built-in security rules
+- Automatic backups
+- CDN-level performance
+
+**Backup:**
+
+Use Firebase's built-in export feature:
+
+```bash
+gcloud firestore export gs://[BUCKET_NAME]/[EXPORT_FOLDER]
+```
+
 #### Comparison Table
+
+| Feature | PostgreSQL (Neon) | SQLite | JSON | Firebase |
+|---------|-------------------|--------|------|----------|
+| **Setup Time** | ~3 min | < 1 min | < 1 min | ~10 min |
+| **Read Speed** | Very Fast | Very Fast | Very Fast | Fast |
+| **Write Speed** | Very Fast | Very Fast | Fast | Medium |
+| **Concurrent Writes** | Excellent | Good | Poor | Excellent |
+| **Max Data Size** | Unlimited | ~281 TB | ~2 GB | Unlimited |
+| **Hosting Cost** | Free tier (512MB) | Free | Free | Pay-per-use |
+| **Scaling** | Auto-scale | Manual | N/A | Auto-scale |
+| **Backup** | Automatic | File copy | File copy | Cloud export |
+| **Edge Support** | Excellent | N/A | N/A | Good |
+| **Best For** | Production | Development | Prototyping | Enterprise |
 
 #### Switching Storage Backends
 
@@ -378,6 +434,12 @@ For detailed migration instructions, see [STORAGE.md](./STORAGE.md).
 - Write operations are synchronous and block
 - Keep total data under 100MB for best performance
 - Not suitable for high-traffic production sites
+
+**Firebase:**
+- Optimize Firestore indexes for your queries
+- Use pagination for large result sets
+- Consider caching frequently accessed data
+- Monitor quota usage in Firebase Console
 
 ### API Endpoints
 
@@ -442,8 +504,8 @@ await fetch(`/api/pages/${pageId}/sections/${sectionId}/blocks`, {
 
 - **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript 5.9
-- **Database**: Pluggable adapters (PostgreSQL/Neon, SQLite, JSON)
-- **Storage**: @neondatabase/serverless (PostgreSQL), better-sqlite3 (SQLite), fs (JSON), local file storage (images)
+- **Database**: Pluggable adapters (PostgreSQL/Neon, Firebase Firestore, SQLite, JSON)
+- **Storage**: @neondatabase/serverless (PostgreSQL), Firebase Storage (images), better-sqlite3 (SQLite), fs (JSON)
 - **Styling**: Tailwind CSS 4.1
 - **UI Components**: shadcn/ui
 - **Package Manager**: pnpm
@@ -464,7 +526,12 @@ await fetch(`/api/pages/${pageId}/sections/${sectionId}/blocks`, {
 3. Add environment variables
 4. Deploy
 
-The project is automatically deployed when you push to your repository.
+### Firebase Hosting
+
+```bash
+pnpm build
+firebase deploy
+```
 
 ## License
 
@@ -495,6 +562,14 @@ lsof ./data/cms.db
 # Ensure DATA_DIR exists and is writable
 ls -la ./data/
 chmod 755 ./data/
+```
+
+**Firebase: Connection errors**
+```bash
+# Verify environment variables are set
+echo $NEXT_PUBLIC_FIREBASE_PROJECT_ID
+
+# Check Firebase project status at console.firebase.google.com
 ```
 
 **Switching storage backends**

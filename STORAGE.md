@@ -1,14 +1,17 @@
 # Storage Adapter System
 
-FireCMS supports multiple storage backends through an adapter pattern. You can choose between Firebase Firestore (cloud), JSON file storage (local), or SQLite (local database).
+FireCMS supports multiple storage backends through an adapter pattern. You can choose between PostgreSQL/Neon (serverless), Firebase Firestore (cloud), SQLite (local database), or JSON file storage (local).
 
 ## Configuration
 
 Set your storage type in `.env.local`:
 
 ```bash
-# Choose one: "firebase", "json", or "sqlite"
-STORAGE_TYPE=firebase
+# Choose one: "postgres", "firebase", "sqlite", or "json"
+STORAGE_TYPE=postgres
+
+# For PostgreSQL, provide connection string
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
 
 # For JSON and SQLite, specify the data directory
 DATA_DIR=./data
@@ -16,7 +19,104 @@ DATA_DIR=./data
 
 ## Storage Options
 
-### 1. Firebase Firestore (Default)
+### 1. PostgreSQL (Neon) - Recommended for Production
+
+**Best for**: Production deployments, serverless apps, scalable applications, edge computing
+
+**Pros:**
+- Serverless PostgreSQL with auto-scaling
+- Free tier: 512MB storage, 3GiB data transfer/month
+- Connection pooling built-in
+- Database branching for dev/staging/prod
+- Sub-10ms query latency globally
+- Compatible with Vercel, Netlify, Railway
+- Full PostgreSQL features (JSONB, indexes, CTEs)
+- Automatic backups and point-in-time recovery
+- No server maintenance
+
+**Cons:**
+- Requires internet connection
+- Free tier has compute limits
+- Costs money beyond free tier
+
+**Setup:**
+
+1. Create account at [neon.tech](https://neon.tech)
+2. Create a new project
+3. Copy connection string from dashboard
+4. Add to `.env.local`:
+
+```bash
+STORAGE_TYPE=postgres
+DATABASE_URL=postgresql://username:password@ep-xxx-123.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+5. The schema will be created automatically on first run
+
+**Database Schema:**
+
+```sql
+-- Pages table with UUID primary keys
+CREATE TABLE pages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  published BOOLEAN DEFAULT FALSE,
+  version INTEGER DEFAULT 1,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Sections with foreign key to pages
+CREATE TABLE sections (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  page_id UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  "order" INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Blocks with JSONB data storage
+CREATE TABLE blocks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  section_id UUID NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  "order" INTEGER NOT NULL,
+  data JSONB NOT NULL
+);
+```
+
+**Features:**
+- Version tracking with automatic increment
+- JSONB for flexible block data storage
+- GIN indexes for fast JSON queries
+- Foreign key constraints with CASCADE delete
+- Automatic timestamp management
+- Connection pooling for serverless
+
+**Performance:**
+- Optimized for serverless/edge runtime
+- WebSocket support for low latency
+- Automatic query optimization
+- Built-in caching
+
+**Deployment:**
+
+For Vercel deployment, Neon auto-detects and configures:
+```bash
+# Vercel will automatically use DATABASE_URL
+vercel env add DATABASE_URL
+```
+
+For database branching (dev/staging):
+```bash
+# In Neon dashboard, create branches for each environment
+# Use different connection strings per environment
+```
+
+### 2. Firebase Firestore
 
 **Best for**: Production deployments, real-time updates, scalability
 
@@ -58,7 +158,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 - Nested structure with subcollections for sections and blocks
 - Automatic timestamp management
 
-### 2. JSON File Storage
+### 3. JSON File Storage
 
 **Best for**: Development, simple deployments, version control of content
 
@@ -116,7 +216,7 @@ git add data/cms-data.json
 git commit -m "Update about page content"
 ```
 
-### 3. SQLite Database
+### 4. SQLite Database
 
 **Best for**: Medium-scale deployments, better performance than JSON, local hosting
 
@@ -261,11 +361,18 @@ Use **JSON** storage for:
 
 ### For Production
 
+Use **PostgreSQL (Neon)** for:
+- Serverless production deployments
+- Edge computing applications
+- Scalable cloud apps (startups to enterprise)
+- Teams needing database branching
+- Cost-effective hosting (free tier available)
+
 Use **Firebase** for:
-- Scalable cloud deployment
-- Real-time features
+- Real-time features required
+- Google Cloud Platform integration
 - Global CDN delivery
-- Managed backups
+- Enterprise-scale applications
 
 Use **SQLite** for:
 - Self-hosted deployments
@@ -274,6 +381,15 @@ Use **SQLite** for:
 - Embedded in applications
 
 ### Backup Strategy
+
+**PostgreSQL (Neon):**
+- Automatic daily backups (included)
+- Point-in-time recovery available
+- Manual backup via pg_dump:
+  ```bash
+  pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
+  ```
+- Use Neon branching for instant database snapshots
 
 **Firebase:**
 - Enable daily automatic backups in Firebase console
@@ -295,17 +411,49 @@ Use **SQLite** for:
 
 ## Performance Comparison
 
-| Feature | Firebase | JSON | SQLite |
-|---------|----------|------|--------|
-| **Read Speed** | Fast (CDN) | Very Fast | Very Fast |
-| **Write Speed** | Medium | Fast | Very Fast |
-| **Concurrent Writes** | Excellent | Poor | Good |
-| **Scalability** | Unlimited | Limited | Medium |
-| **Setup Complexity** | Medium | Easy | Easy |
-| **Cost** | Pay-per-use | Free | Free |
-| **Real-time** | Yes | No | No |
+| Feature | PostgreSQL (Neon) | Firebase | JSON | SQLite |
+|---------|-------------------|----------|------|--------|
+| **Read Speed** | Very Fast | Fast (CDN) | Very Fast | Very Fast |
+| **Write Speed** | Very Fast | Medium | Fast | Very Fast |
+| **Concurrent Writes** | Excellent | Excellent | Poor | Good |
+| **Scalability** | Unlimited | Unlimited | Limited | Medium |
+| **Setup Complexity** | Easy | Medium | Easy | Easy |
+| **Cost** | Free tier + usage | Pay-per-use | Free | Free |
+| **Real-time** | No (Polling) | Yes | No | No |
+| **Edge Support** | Excellent | Good | N/A | N/A |
+| **Serverless** | Yes | Yes | No | No |
 
 ## Troubleshooting
+
+### PostgreSQL Connection Issues
+
+```
+Error: PostgreSQL connection string required
+```
+
+**Solution:** Ensure `DATABASE_URL` or `POSTGRES_URL` is set in `.env.local`:
+```bash
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+```
+
+```
+Error: Connection timeout
+```
+
+**Solution:**
+- Check your Neon project is active (not suspended)
+- Verify connection string is correct
+- Check network/firewall settings
+- Ensure SSL is enabled in connection string
+
+```
+Error: Too many connections
+```
+
+**Solution:**
+- Neon provides connection pooling by default
+- Check your free tier limits in Neon dashboard
+- Consider upgrading plan for more connections
 
 ### Firebase Connection Issues
 

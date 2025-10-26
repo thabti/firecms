@@ -1,16 +1,17 @@
 {
   "name": "firecms",
   "version": "2.0.0",
-  "description": "Modern CMS built with Next.js, Firebase, and Tailwind CSS",
+  "description": "Modern CMS built with Next.js and Tailwind CSS",
   "scripts": {
+    "dev:script": "bash scripts/start-dev.sh",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clean": "bash scripts/cleanup-dev-servers.sh"
   },
   "keywords": [
     "cms",
-    "firebase",
     "nextjs",
     "tailwind",
     "headless-cms"
@@ -20,19 +21,18 @@
   "packageManager": "pnpm@10.18.3",
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@neondatabase/serverless": "^1.0.2",
     "better-sqlite3": "^12.4.1",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "firebase": "^12.4.0",
     "lucide-react": "^0.548.0",
-    "next": "^16.0.0",
+    "next": "^15.5.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",
     "sharp": "^0.34.4",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -44,7 +44,7 @@
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.16",
+    "tailwindcss": "3.4.18",
     "typescript": "^5.9.3"
   }
 }

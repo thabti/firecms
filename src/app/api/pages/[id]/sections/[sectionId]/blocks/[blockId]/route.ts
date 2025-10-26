@@ -24,6 +24,8 @@ export async function PUT(
       ordered: body.ordered,
       author: body.author,
       order: body.order,
+      urls: body.urls,
+      dimensions: body.dimensions,
     };
 
     const adapter = await getStorageAdapter();
@@ -34,6 +36,15 @@ export async function PUT(
     console.error("Error updating block:", error);
     return createErrorResponse(error as Error, 500, { requestId });
   }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  {
+    params,
+  }: { params: Promise<{ id: string; sectionId: string; blockId: string }> }
+) {
+  return PUT(request, { params });
 }
 
 export async function DELETE(

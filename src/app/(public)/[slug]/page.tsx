@@ -82,7 +82,7 @@ function renderBlock(block: Block, index: number) {
         </div>
       );
     case "heading":
-      const HeadingTag = `h${block.level}` as keyof JSX.IntrinsicElements;
+      const HeadingTag = `h${block.level}` as keyof React.JSX.IntrinsicElements;
       const headingClasses = {
         1: "text-4xl font-bold",
         2: "text-3xl font-bold",

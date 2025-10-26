@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 
 /**
- * Storage adapter interface for different backends (Firebase, SQLite, JSON)
+ * Storage adapter interface for different backends (SQLite, JSON, PostgreSQL)
  */
 export interface StorageAdapter {
   // Pages
@@ -37,4 +37,4 @@ export interface StorageAdapter {
   close?(): Promise<void>;
 }
 
-export type StorageType = "firebase" | "json" | "sqlite";
+export type StorageType = "json" | "sqlite" | "postgres";

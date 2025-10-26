@@ -21,7 +21,16 @@ export async function apiCall<T>(url: string, options?: RequestInit): Promise<T>
   const response = await fetch(url, options);
 
   if (!response.ok) {
-    throw new Error(`API call failed: ${response.statusText}`);
+    let errorMessage = `API call failed: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (errorData.error) {
+        errorMessage = `API call failed: ${errorData.error}`;
+      }
+    } catch {
+      // If we can't parse the error as JSON, use the status text
+    }
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();
