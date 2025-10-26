@@ -49,6 +49,8 @@ export default function EditPagePage({
   } | null>(null);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [templateTargetSection, setTemplateTargetSection] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPage();
@@ -179,7 +181,7 @@ export default function EditPagePage({
   };
 
   const moveBlockUp = async (sectionId: string, blockIndex: number) => {
-    if (!page || blockIndex === 0) return;
+    if (!page || blockIndex === 0 || reordering) return;
 
     const sectionIndex = page.sections.findIndex((s) => s.id === sectionId);
     if (sectionIndex === -1) return;
@@ -187,36 +189,51 @@ export default function EditPagePage({
     const section = page.sections[sectionIndex];
     const blocks = [...section.blocks];
 
-    // Swap with previous block
-    [blocks[blockIndex], blocks[blockIndex - 1]] = [
-      blocks[blockIndex - 1],
-      blocks[blockIndex],
+    // Optimistic update - update UI immediately
+    const updatedSections = [...page.sections];
+    const updatedBlocks = [...blocks];
+    [updatedBlocks[blockIndex], updatedBlocks[blockIndex - 1]] = [
+      updatedBlocks[blockIndex - 1],
+      updatedBlocks[blockIndex],
     ];
-
-    // Update order property
-    blocks.forEach((block, index) => {
+    updatedBlocks.forEach((block, index) => {
       block.order = index;
     });
+    updatedSections[sectionIndex] = { ...section, blocks: updatedBlocks };
+    setPage({ ...page, sections: updatedSections });
 
-    // Update both blocks
+    setReordering(true);
+    setError(null);
+
     try {
-      await Promise.all(
-        blocks.map((block) =>
-          fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order: block.order }),
-          })
-        )
-      );
-      fetchPage();
+      // Only update the two blocks that changed positions
+      const block1 = updatedBlocks[blockIndex];
+      const block2 = updatedBlocks[blockIndex - 1];
+
+      await Promise.all([
+        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block1.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: block1.order }),
+        }),
+        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block2.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: block2.order }),
+        }),
+      ]);
     } catch (error) {
       console.error("Error reordering blocks:", error);
+      setError("Failed to reorder blocks. Please refresh the page.");
+      // Revert optimistic update on error
+      fetchPage();
+    } finally {
+      setReordering(false);
     }
   };
 
   const moveBlockDown = async (sectionId: string, blockIndex: number) => {
-    if (!page) return;
+    if (!page || reordering) return;
 
     const sectionIndex = page.sections.findIndex((s) => s.id === sectionId);
     if (sectionIndex === -1) return;
@@ -226,97 +243,134 @@ export default function EditPagePage({
 
     const blocks = [...section.blocks];
 
-    // Swap with next block
-    [blocks[blockIndex], blocks[blockIndex + 1]] = [
-      blocks[blockIndex + 1],
-      blocks[blockIndex],
+    // Optimistic update - update UI immediately
+    const updatedSections = [...page.sections];
+    const updatedBlocks = [...blocks];
+    [updatedBlocks[blockIndex], updatedBlocks[blockIndex + 1]] = [
+      updatedBlocks[blockIndex + 1],
+      updatedBlocks[blockIndex],
     ];
-
-    // Update order property
-    blocks.forEach((block, index) => {
+    updatedBlocks.forEach((block, index) => {
       block.order = index;
     });
+    updatedSections[sectionIndex] = { ...section, blocks: updatedBlocks };
+    setPage({ ...page, sections: updatedSections });
 
-    // Update both blocks
+    setReordering(true);
+    setError(null);
+
     try {
-      await Promise.all(
-        blocks.map((block) =>
-          fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order: block.order }),
-          })
-        )
-      );
-      fetchPage();
+      // Only update the two blocks that changed positions
+      const block1 = updatedBlocks[blockIndex];
+      const block2 = updatedBlocks[blockIndex + 1];
+
+      await Promise.all([
+        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block1.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: block1.order }),
+        }),
+        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block2.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: block2.order }),
+        }),
+      ]);
     } catch (error) {
       console.error("Error reordering blocks:", error);
+      setError("Failed to reorder blocks. Please refresh the page.");
+      // Revert optimistic update on error
+      fetchPage();
+    } finally {
+      setReordering(false);
     }
   };
 
   const moveSectionUp = async (sectionIndex: number) => {
-    if (!page || sectionIndex === 0) return;
+    if (!page || sectionIndex === 0 || reordering) return;
 
+    // Optimistic update - update UI immediately
     const sections = [...page.sections];
-
-    // Swap with previous section
     [sections[sectionIndex], sections[sectionIndex - 1]] = [
       sections[sectionIndex - 1],
       sections[sectionIndex],
     ];
-
-    // Update order property
     sections.forEach((section, index) => {
       section.order = index;
     });
+    setPage({ ...page, sections });
 
-    // Update both sections
+    setReordering(true);
+    setError(null);
+
     try {
-      await Promise.all(
-        sections.map((section) =>
-          fetch(`/api/pages/${id}/sections/${section.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order: section.order }),
-          })
-        )
-      );
-      fetchPage();
+      // Only update the two sections that changed positions
+      const section1 = sections[sectionIndex];
+      const section2 = sections[sectionIndex - 1];
+
+      await Promise.all([
+        fetch(`/api/pages/${id}/sections/${section1.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: section1.order }),
+        }),
+        fetch(`/api/pages/${id}/sections/${section2.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: section2.order }),
+        }),
+      ]);
     } catch (error) {
       console.error("Error reordering sections:", error);
+      setError("Failed to reorder sections. Please refresh the page.");
+      // Revert optimistic update on error
+      fetchPage();
+    } finally {
+      setReordering(false);
     }
   };
 
   const moveSectionDown = async (sectionIndex: number) => {
-    if (!page || sectionIndex === page.sections.length - 1) return;
+    if (!page || sectionIndex === page.sections.length - 1 || reordering) return;
 
+    // Optimistic update - update UI immediately
     const sections = [...page.sections];
-
-    // Swap with next section
     [sections[sectionIndex], sections[sectionIndex + 1]] = [
       sections[sectionIndex + 1],
       sections[sectionIndex],
     ];
-
-    // Update order property
     sections.forEach((section, index) => {
       section.order = index;
     });
+    setPage({ ...page, sections });
 
-    // Update both sections
+    setReordering(true);
+    setError(null);
+
     try {
-      await Promise.all(
-        sections.map((section) =>
-          fetch(`/api/pages/${id}/sections/${section.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order: section.order }),
-          })
-        )
-      );
-      fetchPage();
+      // Only update the two sections that changed positions
+      const section1 = sections[sectionIndex];
+      const section2 = sections[sectionIndex + 1];
+
+      await Promise.all([
+        fetch(`/api/pages/${id}/sections/${section1.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: section1.order }),
+        }),
+        fetch(`/api/pages/${id}/sections/${section2.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: section2.order }),
+        }),
+      ]);
     } catch (error) {
       console.error("Error reordering sections:", error);
+      setError("Failed to reorder sections. Please refresh the page.");
+      // Revert optimistic update on error
+      fetchPage();
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -349,6 +403,28 @@ export default function EditPagePage({
           Back to Pages
         </Button>
       </Link>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <p className="text-red-800">{error}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setError(null)}
+            className="text-red-600 hover:text-red-800"
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
+
+      {/* Reordering Indicator */}
+      {reordering && (
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800 text-sm">Reordering content...</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Page Settings */}

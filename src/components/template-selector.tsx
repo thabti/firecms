@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { FileText, X } from "lucide-react";
+import { useState, useMemo } from "react";
+import { FileText, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { templates, templateCategories } from "@/lib/templates";
 import type { Template } from "@/types/templates";
@@ -14,10 +15,22 @@ interface TemplateSelectorProps {
 
 export function TemplateSelector({ onSelect, onClose }: TemplateSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("page");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredTemplates = templates.filter(
-    (t) => t.category === selectedCategory
-  );
+  const filteredTemplates = useMemo(() => {
+    let filtered = templates.filter((t) => t.category === selectedCategory);
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          t.description.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [selectedCategory, searchQuery]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -37,12 +50,29 @@ export function TemplateSelector({ onSelect, onClose }: TemplateSelectorProps) {
         </CardHeader>
 
         <CardContent className="flex-1 overflow-auto">
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search templates..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
           {/* Category Tabs */}
           <div className="flex gap-2 mb-6 border-b">
             {templateCategories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => {
+                  setSelectedCategory(category.id);
+                  setSearchQuery(""); // Clear search when changing category
+                }}
                 className={`px-4 py-2 border-b-2 transition-colors ${
                   selectedCategory === category.id
                     ? "border-blue-600 text-blue-600 font-medium"
@@ -104,7 +134,20 @@ export function TemplateSelector({ onSelect, onClose }: TemplateSelectorProps) {
 
           {filteredTemplates.length === 0 && (
             <div className="text-center py-12 text-gray-500">
-              No templates in this category yet
+              {searchQuery.trim() ? (
+                <>
+                  <p className="mb-2">No templates found matching &quot;{searchQuery}&quot;</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    Clear Search
+                  </Button>
+                </>
+              ) : (
+                <p>No templates in this category yet</p>
+              )}
             </div>
           )}
         </CardContent>
