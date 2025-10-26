@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { updateSection, deleteSection } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getStorageAdapter } from "@/lib/adapters";
+import { createAPIResponse, createErrorResponse, getRequestId } from "@/lib/api-utils";
 import type { UpdateSectionInput } from "@/types";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sectionId: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id, sectionId } = await params;
     const body = await request.json();
@@ -14,14 +17,13 @@ export async function PUT(
       order: body.order,
     };
 
-    await updateSection(id, sectionId, data);
-    return NextResponse.json({ success: true });
+    const adapter = await getStorageAdapter();
+    await adapter.updateSection(id, sectionId, data);
+
+    return createAPIResponse({ success: true }, { requestId });
   } catch (error) {
     console.error("Error updating section:", error);
-    return NextResponse.json(
-      { error: "Failed to update section" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }
 
@@ -29,15 +31,16 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sectionId: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id, sectionId } = await params;
-    await deleteSection(id, sectionId);
-    return NextResponse.json({ success: true });
+    const adapter = await getStorageAdapter();
+    await adapter.deleteSection(id, sectionId);
+
+    return createAPIResponse({ success: true }, { requestId });
   } catch (error) {
     console.error("Error deleting section:", error);
-    return NextResponse.json(
-      { error: "Failed to delete section" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }

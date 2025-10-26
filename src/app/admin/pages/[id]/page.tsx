@@ -31,6 +31,7 @@ import type { Page, Section, Block, BlockType } from "@/types";
 import type { Template } from "@/types/templates";
 import { BlockEditor } from "@/components/block-editor";
 import { TemplateSelector } from "@/components/template-selector";
+import { apiCall } from "@/lib/api-client";
 
 export default function EditPagePage({
   params,
@@ -58,8 +59,7 @@ export default function EditPagePage({
 
   const fetchPage = async () => {
     try {
-      const response = await fetch(`/api/pages/${id}`);
-      const data = await response.json();
+      const data = await apiCall<Page>(`/api/pages/${id}`);
       setPage(data);
     } catch (error) {
       console.error("Error fetching page:", error);
@@ -73,7 +73,7 @@ export default function EditPagePage({
     setSaving(true);
 
     try {
-      await fetch(`/api/pages/${id}`, {
+      await apiCall(`/api/pages/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -96,7 +96,7 @@ export default function EditPagePage({
     if (!title) return;
 
     try {
-      await fetch(`/api/pages/${id}/sections`, {
+      await apiCall(`/api/pages/${id}/sections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
@@ -111,7 +111,7 @@ export default function EditPagePage({
     if (!confirm("Delete this section?")) return;
 
     try {
-      await fetch(`/api/pages/${id}/sections/${sectionId}`, {
+      await apiCall(`/api/pages/${id}/sections/${sectionId}`, {
         method: "DELETE",
       });
       fetchPage();
@@ -139,7 +139,7 @@ export default function EditPagePage({
         blockData.content = "Quote text";
       }
 
-      await fetch(`/api/pages/${id}/sections/${sectionId}/blocks`, {
+      await apiCall(`/api/pages/${id}/sections/${sectionId}/blocks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(blockData),
@@ -156,7 +156,7 @@ export default function EditPagePage({
     data: any
   ) => {
     try {
-      await fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${blockId}`, {
+      await apiCall(`/api/pages/${id}/sections/${sectionId}/blocks/${blockId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -171,7 +171,7 @@ export default function EditPagePage({
     if (!confirm("Delete this block?")) return;
 
     try {
-      await fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${blockId}`, {
+      await apiCall(`/api/pages/${id}/sections/${sectionId}/blocks/${blockId}`, {
         method: "DELETE",
       });
       fetchPage();
@@ -211,12 +211,12 @@ export default function EditPagePage({
       const block2 = updatedBlocks[blockIndex - 1];
 
       await Promise.all([
-        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block1.id}`, {
+        apiCall(`/api/pages/${id}/sections/${sectionId}/blocks/${block1.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: block1.order }),
         }),
-        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block2.id}`, {
+        apiCall(`/api/pages/${id}/sections/${sectionId}/blocks/${block2.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: block2.order }),
@@ -265,12 +265,12 @@ export default function EditPagePage({
       const block2 = updatedBlocks[blockIndex + 1];
 
       await Promise.all([
-        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block1.id}`, {
+        apiCall(`/api/pages/${id}/sections/${sectionId}/blocks/${block1.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: block1.order }),
         }),
-        fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block2.id}`, {
+        apiCall(`/api/pages/${id}/sections/${sectionId}/blocks/${block2.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: block2.order }),
@@ -309,12 +309,12 @@ export default function EditPagePage({
       const section2 = sections[sectionIndex - 1];
 
       await Promise.all([
-        fetch(`/api/pages/${id}/sections/${section1.id}`, {
+        apiCall(`/api/pages/${id}/sections/${section1.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: section1.order }),
         }),
-        fetch(`/api/pages/${id}/sections/${section2.id}`, {
+        apiCall(`/api/pages/${id}/sections/${section2.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: section2.order }),
@@ -353,12 +353,12 @@ export default function EditPagePage({
       const section2 = sections[sectionIndex + 1];
 
       await Promise.all([
-        fetch(`/api/pages/${id}/sections/${section1.id}`, {
+        apiCall(`/api/pages/${id}/sections/${section1.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: section1.order }),
         }),
-        fetch(`/api/pages/${id}/sections/${section2.id}`, {
+        apiCall(`/api/pages/${id}/sections/${section2.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: section2.order }),
@@ -378,7 +378,7 @@ export default function EditPagePage({
     try {
       // Insert all blocks from the template
       for (const templateBlock of template.blocks) {
-        await fetch(`/api/pages/${id}/sections/${sectionId}/blocks`, {
+        await apiCall(`/api/pages/${id}/sections/${sectionId}/blocks`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(templateBlock),

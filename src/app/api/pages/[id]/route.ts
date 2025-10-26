@@ -1,24 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getPage, updatePage, deletePage } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getStorageAdapter } from "@/lib/adapters";
+import { createAPIResponse, createErrorResponse, getRequestId } from "@/lib/api-utils";
 import type { UpdatePageInput } from "@/types";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id } = await params;
-    const page = await getPage(id);
+    const adapter = await getStorageAdapter();
+    const page = await adapter.getPage(id);
+
     if (!page) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+      return createErrorResponse(new Error("Page not found"), 404, { requestId });
     }
-    return NextResponse.json(page);
+
+    return createAPIResponse(page, { requestId });
   } catch (error) {
     console.error("Error fetching page:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch page" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }
 
@@ -26,6 +29,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -35,15 +40,14 @@ export async function PUT(
       published: body.published,
     };
 
-    await updatePage(id, data);
-    const updatedPage = await getPage(id);
-    return NextResponse.json(updatedPage);
+    const adapter = await getStorageAdapter();
+    await adapter.updatePage(id, data);
+    const updatedPage = await adapter.getPage(id);
+
+    return createAPIResponse(updatedPage, { requestId });
   } catch (error) {
     console.error("Error updating page:", error);
-    return NextResponse.json(
-      { error: "Failed to update page" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }
 
@@ -51,15 +55,16 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id } = await params;
-    await deletePage(id);
-    return NextResponse.json({ success: true });
+    const adapter = await getStorageAdapter();
+    await adapter.deletePage(id);
+
+    return createAPIResponse({ success: true }, { requestId });
   } catch (error) {
     console.error("Error deleting page:", error);
-    return NextResponse.json(
-      { error: "Failed to delete page" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }

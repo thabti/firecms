@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSection } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getStorageAdapter } from "@/lib/adapters";
+import { createAPIResponse, createErrorResponse, getRequestId } from "@/lib/api-utils";
 import type { CreateSectionInput } from "@/types";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -15,13 +18,12 @@ export async function POST(
       order: body.order,
     };
 
-    const section = await createSection(data);
-    return NextResponse.json(section, { status: 201 });
+    const adapter = await getStorageAdapter();
+    const section = await adapter.createSection(data);
+
+    return createAPIResponse(section, { requestId, status: 201 });
   } catch (error) {
     console.error("Error creating section:", error);
-    return NextResponse.json(
-      { error: "Failed to create section" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Page } from "@/types";
+import { apiCall } from "@/lib/api-client";
 
 export default function AdminPage() {
   const [pages, setPages] = useState<Page[]>([]);
@@ -23,8 +24,7 @@ export default function AdminPage() {
 
   const fetchPages = async () => {
     try {
-      const response = await fetch("/api/pages");
-      const data = await response.json();
+      const data = await apiCall<Page[]>("/api/pages");
       setPages(data);
     } catch (error) {
       console.error("Error fetching pages:", error);
@@ -37,7 +37,7 @@ export default function AdminPage() {
     if (!confirm("Are you sure you want to delete this page?")) return;
 
     try {
-      await fetch(`/api/pages/${id}`, { method: "DELETE" });
+      await apiCall(`/api/pages/${id}`, { method: "DELETE" });
       setPages(pages.filter((p) => p.id !== id));
     } catch (error) {
       console.error("Error deleting page:", error);

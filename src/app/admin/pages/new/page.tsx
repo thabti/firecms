@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiCall } from "@/lib/api-client";
+import type { Page } from "@/types";
 
 export default function NewPagePage() {
   const router = useRouter();
@@ -25,15 +27,12 @@ export default function NewPagePage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/pages", {
+      const page = await apiCall<Page>("/api/pages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error("Failed to create page");
-
-      const page = await response.json();
       router.push(`/admin/pages/${page.id}`);
     } catch (error) {
       console.error("Error creating page:", error);

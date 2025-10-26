@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { updateBlock, deleteBlock } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getStorageAdapter } from "@/lib/adapters";
+import { createAPIResponse, createErrorResponse, getRequestId } from "@/lib/api-utils";
 import type { UpdateBlockInput } from "@/types";
 
 export async function PUT(
@@ -8,6 +9,8 @@ export async function PUT(
     params,
   }: { params: Promise<{ id: string; sectionId: string; blockId: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id, sectionId, blockId } = await params;
     const body = await request.json();
@@ -23,14 +26,13 @@ export async function PUT(
       order: body.order,
     };
 
-    await updateBlock(id, sectionId, blockId, data);
-    return NextResponse.json({ success: true });
+    const adapter = await getStorageAdapter();
+    await adapter.updateBlock(id, sectionId, blockId, data);
+
+    return createAPIResponse({ success: true }, { requestId });
   } catch (error) {
     console.error("Error updating block:", error);
-    return NextResponse.json(
-      { error: "Failed to update block" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }
 
@@ -40,15 +42,16 @@ export async function DELETE(
     params,
   }: { params: Promise<{ id: string; sectionId: string; blockId: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id, sectionId, blockId } = await params;
-    await deleteBlock(id, sectionId, blockId);
-    return NextResponse.json({ success: true });
+    const adapter = await getStorageAdapter();
+    await adapter.deleteBlock(id, sectionId, blockId);
+
+    return createAPIResponse({ success: true }, { requestId });
   } catch (error) {
     console.error("Error deleting block:", error);
-    return NextResponse.json(
-      { error: "Failed to delete block" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }

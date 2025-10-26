@@ -1,21 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getPages, createPage } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getStorageAdapter } from "@/lib/adapters";
+import { createAPIResponse, createErrorResponse, getRequestId } from "@/lib/api-utils";
 import type { CreatePageInput } from "@/types";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const requestId = getRequestId(request.headers);
+
   try {
-    const pages = await getPages();
-    return NextResponse.json(pages);
+    const adapter = await getStorageAdapter();
+    const pages = await adapter.getPages();
+    return createAPIResponse(pages, { requestId });
   } catch (error) {
     console.error("Error fetching pages:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch pages" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const body = await request.json();
     const data: CreatePageInput = {
@@ -25,13 +28,11 @@ export async function POST(request: NextRequest) {
       published: body.published ?? false,
     };
 
-    const page = await createPage(data);
-    return NextResponse.json(page, { status: 201 });
+    const adapter = await getStorageAdapter();
+    const page = await adapter.createPage(data);
+    return createAPIResponse(page, { requestId, status: 201 });
   } catch (error) {
     console.error("Error creating page:", error);
-    return NextResponse.json(
-      { error: "Failed to create page" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }

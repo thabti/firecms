@@ -68,8 +68,29 @@ export interface Page {
   description?: string;
   sections: Section[];
   published: boolean;
+  version: number; // Version number for optimistic locking
   createdAt: Date;
   updatedAt: Date;
+}
+
+// API Response wrapper with metadata
+export interface APIResponse<T> {
+  data: T;
+  meta: {
+    version: string; // API version (e.g., "v1")
+    timestamp: string; // ISO 8601 timestamp
+    requestId?: string; // Optional request ID for tracking
+  };
+}
+
+// Paginated API Response
+export interface PaginatedAPIResponse<T> extends APIResponse<T[]> {
+  pagination?: {
+    total: number;
+    page: number;
+    pageSize: number;
+    hasMore: boolean;
+  };
 }
 
 export interface CreatePageInput {

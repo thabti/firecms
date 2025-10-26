@@ -12,6 +12,7 @@ import {
   isValidImageType,
   formatFileSize,
 } from "@/lib/image-utils";
+import { unwrapAPIResponse } from "@/lib/api-client";
 
 interface BlockEditorProps {
   block: Block;
@@ -90,7 +91,8 @@ export function BlockEditor({
         throw new Error("Upload failed");
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
+      const data = unwrapAPIResponse<any>(responseData);
 
       // Update edit data with all image information
       setEditData({

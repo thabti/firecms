@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createBlock } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getStorageAdapter } from "@/lib/adapters";
+import { createAPIResponse, createErrorResponse, getRequestId } from "@/lib/api-utils";
 import type { CreateBlockInput } from "@/types";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sectionId: string }> }
 ) {
+  const requestId = getRequestId(request.headers);
+
   try {
     const { id, sectionId } = await params;
     const body = await request.json();
@@ -24,13 +27,12 @@ export async function POST(
       order: body.order,
     };
 
-    const block = await createBlock(data);
-    return NextResponse.json(block, { status: 201 });
+    const adapter = await getStorageAdapter();
+    const block = await adapter.createBlock(data);
+
+    return createAPIResponse(block, { requestId, status: 201 });
   } catch (error) {
     console.error("Error creating block:", error);
-    return NextResponse.json(
-      { error: "Failed to create block" },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error, 500, { requestId });
   }
 }
