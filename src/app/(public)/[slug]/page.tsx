@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { getPageBySlug } from "@/lib/db";
+import { OptimizedImage } from "@/components/optimized-image";
 import type { Block } from "@/types";
 
-function renderBlock(block: Block) {
+function renderBlock(block: Block, index: number) {
   switch (block.type) {
     case "text":
       return (
@@ -30,20 +31,11 @@ function renderBlock(block: Block) {
       );
     case "image":
       return (
-        <div key={block.id} className="my-8">
-          {block.url && (
-            <img
-              src={block.url}
-              alt={block.alt}
-              className="max-w-full h-auto rounded-lg shadow-md"
-            />
-          )}
-          {block.caption && (
-            <p className="text-sm text-gray-600 mt-2 text-center">
-              {block.caption}
-            </p>
-          )}
-        </div>
+        <OptimizedImage
+          key={block.id}
+          block={block}
+          priority={index === 0} // Prioritize first image
+        />
       );
     case "list":
       return (
@@ -115,7 +107,7 @@ export default async function PublicPage({
                 <div className="space-y-6">
                   {section.blocks
                     .sort((a, b) => a.order - b.order)
-                    .map((block) => renderBlock(block))}
+                    .map((block, index) => renderBlock(block, index))}
                 </div>
               </section>
             ))}

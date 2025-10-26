@@ -6,6 +6,7 @@ A modern, headless CMS built with Next.js 16, Firebase, Tailwind CSS, and shadcn
 
 - **Modern Stack**: Next.js 16 with App Router, React 19, TypeScript
 - **Firebase Integration**: Firestore for database, Firebase Storage for images
+- **Image Optimization**: Automatic compression, multiple sizes, responsive images
 - **Block-Based Content**: Flexible page builder with multiple block types
 - **RESTful API**: Full API for headless CMS capabilities
 - **Beautiful UI**: Tailwind CSS with shadcn/ui components
@@ -122,6 +123,29 @@ Access the admin panel at `/admin` to:
 3. Fill in the page details (title, slug, description)
 4. Click "Create Page"
 5. Add sections and blocks to build your content
+
+### Image Optimization
+
+FireCMS includes advanced image optimization:
+
+**Client-Side:**
+- Automatic compression before upload (reduces file size by up to 70%)
+- Real-time compression feedback
+- File type validation
+
+**Server-Side:**
+- Multiple size generation (thumbnail, medium, large, original)
+- Auto-rotation based on EXIF data
+- Progressive JPEG encoding
+- Optimized quality settings
+
+**Delivery:**
+- Next.js Image component for automatic optimization
+- Responsive images with proper srcset
+- Lazy loading for better performance
+- Priority loading for above-the-fold images
+
+See [IMAGE_OPTIMIZATION.md](./IMAGE_OPTIMIZATION.md) for detailed documentation.
 
 ### API Endpoints
 

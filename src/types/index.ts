@@ -11,8 +11,18 @@ export interface ImageBlock {
   id: string;
   type: "image";
   url: string;
+  urls?: {
+    original?: string;
+    thumbnail?: string;
+    medium?: string;
+    large?: string;
+  };
   alt: string;
   caption?: string;
+  dimensions?: {
+    width?: number;
+    height?: number;
+  };
   order: number;
 }
 

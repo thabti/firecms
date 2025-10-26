@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Save, Upload } from "lucide-react";
+import { Trash2, Save, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { Block } from "@/types";
+import {
+  compressImage,
+  isValidImageType,
+  formatFileSize,
+} from "@/lib/image-utils";
 
 interface BlockEditorProps {
   block: Block;
@@ -18,6 +23,7 @@ export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>(block);
   const [uploading, setUploading] = useState(false);
+  const [compressionInfo, setCompressionInfo] = useState<string>("");
 
   const handleSave = () => {
     onUpdate(editData);
@@ -28,21 +34,70 @@ export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!isValidImageType(file)) {
+      alert("Please select a valid image file (JPEG, PNG, WebP, or GIF)");
+      return;
+    }
+
     setUploading(true);
+    setCompressionInfo("");
+
     try {
+      // Show original file size
+      const originalSize = file.size;
+      setCompressionInfo(`Compressing ${formatFileSize(originalSize)}...`);
+
+      // Compress image on client side
+      const compressedFile = await compressImage(file, {
+        maxSizeMB: 2,
+        maxWidthOrHeight: 2048,
+      });
+
+      const compressedSize = compressedFile.size;
+      const savingsPercent = Math.round(
+        ((originalSize - compressedSize) / originalSize) * 100
+      );
+
+      setCompressionInfo(
+        `Compressed: ${formatFileSize(originalSize)} → ${formatFileSize(
+          compressedSize
+        )} (${savingsPercent}% smaller). Uploading...`
+      );
+
+      // Upload compressed image
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
 
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
       const data = await response.json();
-      setEditData({ ...editData, url: data.url });
+
+      // Update edit data with all image information
+      setEditData({
+        ...editData,
+        url: data.url, // Main URL (original)
+        urls: data.urls, // All sizes
+        dimensions: data.dimensions,
+      });
+
+      setCompressionInfo(
+        `✓ Uploaded successfully! Multiple sizes created.`
+      );
+
+      // Clear compression info after 3 seconds
+      setTimeout(() => setCompressionInfo(""), 3000);
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("Failed to upload image");
+      setCompressionInfo("");
     } finally {
       setUploading(false);
     }
@@ -164,21 +219,40 @@ export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Image</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={uploading}
+                  className="flex-1"
                 />
-                {uploading && <span className="text-sm">Uploading...</span>}
+                {uploading && (
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                )}
               </div>
+              {compressionInfo && (
+                <p className="text-sm text-blue-600">{compressionInfo}</p>
+              )}
               {editData.url && (
-                <img
-                  src={editData.url}
-                  alt="Preview"
-                  className="max-w-xs h-auto rounded mt-2"
-                />
+                <div className="mt-2">
+                  <img
+                    src={editData.urls?.medium || editData.url}
+                    alt="Preview"
+                    className="max-w-xs h-auto rounded border"
+                  />
+                  {editData.dimensions && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Original: {editData.dimensions.width} ×{" "}
+                      {editData.dimensions.height}px
+                    </p>
+                  )}
+                  {editData.urls && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Sizes available: thumbnail, medium, large, original
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <div className="space-y-2">
@@ -188,7 +262,7 @@ export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
                 onChange={(e) =>
                   setEditData({ ...editData, alt: e.target.value })
                 }
-                placeholder="Describe the image"
+                placeholder="Describe the image for accessibility"
               />
             </div>
             <div className="space-y-2">
@@ -198,6 +272,7 @@ export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
                 onChange={(e) =>
                   setEditData({ ...editData, caption: e.target.value })
                 }
+                placeholder="Optional caption text"
               />
             </div>
           </div>
