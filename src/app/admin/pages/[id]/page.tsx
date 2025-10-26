@@ -12,6 +12,9 @@ import {
   Save,
   Eye,
   EyeOff,
+  ChevronUp,
+  ChevronDown,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +28,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Page, Section, Block, BlockType } from "@/types";
+import type { Template } from "@/types/templates";
 import { BlockEditor } from "@/components/block-editor";
+import { TemplateSelector } from "@/components/template-selector";
 
 export default function EditPagePage({
   params,
@@ -42,6 +47,8 @@ export default function EditPagePage({
     sectionId: string;
     blockId: string;
   } | null>(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [templateTargetSection, setTemplateTargetSection] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPage();
@@ -171,6 +178,165 @@ export default function EditPagePage({
     }
   };
 
+  const moveBlockUp = async (sectionId: string, blockIndex: number) => {
+    if (!page || blockIndex === 0) return;
+
+    const sectionIndex = page.sections.findIndex((s) => s.id === sectionId);
+    if (sectionIndex === -1) return;
+
+    const section = page.sections[sectionIndex];
+    const blocks = [...section.blocks];
+
+    // Swap with previous block
+    [blocks[blockIndex], blocks[blockIndex - 1]] = [
+      blocks[blockIndex - 1],
+      blocks[blockIndex],
+    ];
+
+    // Update order property
+    blocks.forEach((block, index) => {
+      block.order = index;
+    });
+
+    // Update both blocks
+    try {
+      await Promise.all(
+        blocks.map((block) =>
+          fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order: block.order }),
+          })
+        )
+      );
+      fetchPage();
+    } catch (error) {
+      console.error("Error reordering blocks:", error);
+    }
+  };
+
+  const moveBlockDown = async (sectionId: string, blockIndex: number) => {
+    if (!page) return;
+
+    const sectionIndex = page.sections.findIndex((s) => s.id === sectionId);
+    if (sectionIndex === -1) return;
+
+    const section = page.sections[sectionIndex];
+    if (blockIndex === section.blocks.length - 1) return;
+
+    const blocks = [...section.blocks];
+
+    // Swap with next block
+    [blocks[blockIndex], blocks[blockIndex + 1]] = [
+      blocks[blockIndex + 1],
+      blocks[blockIndex],
+    ];
+
+    // Update order property
+    blocks.forEach((block, index) => {
+      block.order = index;
+    });
+
+    // Update both blocks
+    try {
+      await Promise.all(
+        blocks.map((block) =>
+          fetch(`/api/pages/${id}/sections/${sectionId}/blocks/${block.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order: block.order }),
+          })
+        )
+      );
+      fetchPage();
+    } catch (error) {
+      console.error("Error reordering blocks:", error);
+    }
+  };
+
+  const moveSectionUp = async (sectionIndex: number) => {
+    if (!page || sectionIndex === 0) return;
+
+    const sections = [...page.sections];
+
+    // Swap with previous section
+    [sections[sectionIndex], sections[sectionIndex - 1]] = [
+      sections[sectionIndex - 1],
+      sections[sectionIndex],
+    ];
+
+    // Update order property
+    sections.forEach((section, index) => {
+      section.order = index;
+    });
+
+    // Update both sections
+    try {
+      await Promise.all(
+        sections.map((section) =>
+          fetch(`/api/pages/${id}/sections/${section.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order: section.order }),
+          })
+        )
+      );
+      fetchPage();
+    } catch (error) {
+      console.error("Error reordering sections:", error);
+    }
+  };
+
+  const moveSectionDown = async (sectionIndex: number) => {
+    if (!page || sectionIndex === page.sections.length - 1) return;
+
+    const sections = [...page.sections];
+
+    // Swap with next section
+    [sections[sectionIndex], sections[sectionIndex + 1]] = [
+      sections[sectionIndex + 1],
+      sections[sectionIndex],
+    ];
+
+    // Update order property
+    sections.forEach((section, index) => {
+      section.order = index;
+    });
+
+    // Update both sections
+    try {
+      await Promise.all(
+        sections.map((section) =>
+          fetch(`/api/pages/${id}/sections/${section.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order: section.order }),
+          })
+        )
+      );
+      fetchPage();
+    } catch (error) {
+      console.error("Error reordering sections:", error);
+    }
+  };
+
+  const insertTemplate = async (template: Template, sectionId: string) => {
+    try {
+      // Insert all blocks from the template
+      for (const templateBlock of template.blocks) {
+        await fetch(`/api/pages/${id}/sections/${sectionId}/blocks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(templateBlock),
+        });
+      }
+      fetchPage();
+    } catch (error) {
+      console.error("Error inserting template:", error);
+      alert("Failed to insert template");
+    }
+  };
+
   if (loading || !page) {
     return <div className="text-center py-12">Loading...</div>;
   }
@@ -261,12 +427,32 @@ export default function EditPagePage({
               </CardContent>
             </Card>
           ) : (
-            page.sections.map((section) => (
+            page.sections.map((section, sectionIndex) => (
               <Card key={section.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>{section.title}</CardTitle>
                     <div className="flex gap-2">
+                      {sectionIndex > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => moveSectionUp(sectionIndex)}
+                          title="Move section up"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {sectionIndex < page.sections.length - 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => moveSectionDown(sectionIndex)}
+                          title="Move section down"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -278,7 +464,7 @@ export default function EditPagePage({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {section.blocks.map((block) => (
+                  {section.blocks.map((block, blockIndex) => (
                     <BlockEditor
                       key={block.id}
                       block={block}
@@ -286,6 +472,10 @@ export default function EditPagePage({
                         updateBlock(section.id, block.id, data)
                       }
                       onDelete={() => deleteBlock(section.id, block.id)}
+                      onMoveUp={() => moveBlockUp(section.id, blockIndex)}
+                      onMoveDown={() => moveBlockDown(section.id, blockIndex)}
+                      isFirst={blockIndex === 0}
+                      isLast={blockIndex === section.blocks.length - 1}
                     />
                   ))}
 
@@ -325,6 +515,19 @@ export default function EditPagePage({
                     >
                       + Quote
                     </Button>
+                    <div className="border-l pl-2 ml-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          setTemplateTargetSection(section.id);
+                          setShowTemplateSelector(true);
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Use Template
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -332,6 +535,19 @@ export default function EditPagePage({
           )}
         </div>
       </div>
+
+      {/* Template Selector Modal */}
+      {showTemplateSelector && templateTargetSection && (
+        <TemplateSelector
+          onSelect={(template) => {
+            insertTemplate(template, templateTargetSection);
+          }}
+          onClose={() => {
+            setShowTemplateSelector(false);
+            setTemplateTargetSection(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Save, Upload, Loader2 } from "lucide-react";
+import { Trash2, Save, Upload, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,9 +17,21 @@ interface BlockEditorProps {
   block: Block;
   onUpdate: (data: any) => void;
   onDelete: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
-export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
+export function BlockEditor({
+  block,
+  onUpdate,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  isFirst = false,
+  isLast = false,
+}: BlockEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>(block);
   const [uploading, setUploading] = useState(false);
@@ -366,6 +378,30 @@ export function BlockEditor({ block, onUpdate, onDelete }: BlockEditorProps) {
           {block.type}
         </div>
         <div className="flex gap-2">
+          {!isEditing && (
+            <>
+              {!isFirst && onMoveUp && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onMoveUp}
+                  title="Move up"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+              )}
+              {!isLast && onMoveDown && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onMoveDown}
+                  title="Move down"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              )}
+            </>
+          )}
           {isEditing ? (
             <>
               <Button variant="outline" size="sm" onClick={handleSave}>
