@@ -1,7 +1,77 @@
 import { notFound } from "next/navigation";
-import { getPageBySlug } from "@/lib/db";
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { getStorageAdapter } from "@/lib/adapters";
 import { OptimizedImage } from "@/components/optimized-image";
 import type { Block } from "@/types";
+
+// Enable ISR with 60 second revalidation
+export const revalidate = 60;
+
+// Enable dynamic params
+export const dynamicParams = true;
+
+// Generate static params for published pages
+export async function generateStaticParams() {
+  try {
+    const adapter = await getStorageAdapter();
+    const pages = await adapter.getPages();
+
+    return pages
+      .filter((page) => page.published)
+      .map((page) => ({
+        slug: page.slug,
+      }));
+  } catch (error) {
+    console.error("Error generating static params:", error);
+    return [];
+  }
+}
+
+// Generate dynamic metadata
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+
+  try {
+    const adapter = await getStorageAdapter();
+    const page = await adapter.getPageBySlug(slug);
+
+    if (!page || !page.published) {
+      return {
+        title: "Page Not Found",
+      };
+    }
+
+    return {
+      title: `${page.title} | FireCMS`,
+      description: page.description || `Read about ${page.title}`,
+      openGraph: {
+        title: page.title,
+        description: page.description || undefined,
+        type: "article",
+        publishedTime: page.createdAt.toISOString(),
+        modifiedTime: page.updatedAt.toISOString(),
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: page.title,
+        description: page.description || undefined,
+      },
+      alternates: {
+        canonical: `/${slug}`,
+      },
+    };
+  } catch (error) {
+    console.error("Error generating metadata:", error);
+    return {
+      title: "FireCMS",
+    };
+  }
+}
 
 function renderBlock(block: Block, index: number) {
   switch (block.type) {
@@ -72,13 +142,9 @@ function renderBlock(block: Block, index: number) {
   }
 }
 
-export default async function PublicPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const page = await getPageBySlug(slug);
+async function PageContent({ slug }: { slug: string }) {
+  const adapter = await getStorageAdapter();
+  const page = await adapter.getPageBySlug(slug);
 
   if (!page || !page.published) {
     notFound();
@@ -112,7 +178,29 @@ export default async function PublicPage({
               </section>
             ))}
         </div>
+
+        {/* Metadata footer */}
+        <footer className="mt-16 pt-8 border-t border-gray-200 text-sm text-gray-500">
+          <div className="flex justify-between">
+            <span>Published: {new Date(page.createdAt).toLocaleDateString()}</span>
+            <span>Last updated: {new Date(page.updatedAt).toLocaleDateString()}</span>
+          </div>
+        </footer>
       </div>
     </div>
+  );
+}
+
+export default async function PublicPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PageContent slug={slug} />
+    </Suspense>
   );
 }
