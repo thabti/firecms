@@ -1,8 +1,0 @@
-port: 3000
-firebase:
- url: "https://stylecouncil.firebaseio.com/"
-fields:
-  main:
-     - {type: "text", label: "Title", name: "title", class: "", placeholder: "Enter title"}
-     - {type: "textarea", rows: 5, cols: 20,  label: "Description", name: "description", class: "", placeholder: "Enter Description"}
-     - {type: "submit", label: "Save", class: "btn btn-default"}
