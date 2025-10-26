@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import slug from "slug";
 import { apiCall } from "@/lib/api-client";
 import type { Page } from "@/types";
 
@@ -16,6 +17,7 @@ export default function NewPagePage() {
     description: "",
     published: false,
   });
+  const [manualSlugEdit, setManualSlugEdit] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +44,14 @@ export default function NewPagePage() {
     setFormData((prev) => ({
       ...prev,
       title,
-      slug: prev.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      // Only auto-generate slug if user hasn't manually edited it
+      slug: manualSlugEdit ? prev.slug : slug(title),
     }));
+  };
+
+  const handleSlugChange = (slugValue: string) => {
+    setManualSlugEdit(true);
+    setFormData({ ...formData, slug: slug(slugValue) });
   };
 
   return (
@@ -88,14 +96,14 @@ export default function NewPagePage() {
                   type="text"
                   id="slug"
                   value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  onChange={(e) => handleSlugChange(e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="page-url-slug"
                   required
                 />
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                This will be the URL path for your page
+                Auto-generated from title. Edit to customize.
               </p>
             </div>
 

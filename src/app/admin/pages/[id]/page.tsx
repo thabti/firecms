@@ -11,6 +11,8 @@ import Link from "next/link";
 import { apiCall } from "@/lib/api-client";
 import { BlockEditor } from "@/components/block-editor";
 import { TemplateSelector } from "@/components/template-selector";
+import { DraggableSection } from "@/components/draggable-section";
+import { DraggableBlock } from "@/components/draggable-block";
 import { Button } from "@/components/ui/button";
 import type { Page, Section, Block } from "@/types";
 import type { Template } from "@/types/templates";
@@ -196,6 +198,72 @@ export default function EditPagePage() {
       console.error("Error reordering sections:", error);
       showNotification("Failed to reorder section", "error");
       fetchPage();
+    }
+  };
+
+  const handleSectionReorder = async (sourceIndex: number, destinationIndex: number) => {
+    if (!page || sourceIndex === destinationIndex) return;
+
+    const sections = [...page.sections];
+    const [section] = sections.splice(sourceIndex, 1);
+    sections.splice(destinationIndex, 0, section);
+
+    // Optimistic update
+    setPage({ ...page, sections });
+
+    try {
+      // Update order on server
+      await apiCall(`/api/pages/${pageId}/sections/reorder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionIds: sections.map(s => s.id) }),
+      });
+    } catch (error) {
+      console.error("Error reordering sections:", error);
+      showNotification("Failed to reorder section", "error");
+      fetchPage();
+    }
+  };
+
+  const handleBlockReorder = async (sectionId: string, sourceIndex: number, destinationIndex: number) => {
+    if (!page || sourceIndex === destinationIndex) return;
+
+    const sectionIndex = page.sections.findIndex(s => s.id === sectionId);
+    if (sectionIndex === -1) return;
+
+    // Save original state for rollback
+    const originalPage = page;
+
+    const sections = [...page.sections];
+    const section = { ...sections[sectionIndex] };
+    const blocks = [...section.blocks];
+
+    // Reorder blocks
+    const [block] = blocks.splice(sourceIndex, 1);
+    blocks.splice(destinationIndex, 0, block);
+
+    section.blocks = blocks;
+    sections[sectionIndex] = section;
+
+    // Optimistic update
+    setPage({ ...page, sections });
+
+    try {
+      // Update order for all blocks in the section
+      await Promise.all(
+        blocks.map((block, index) =>
+          apiCall(`/api/pages/${pageId}/sections/${sectionId}/blocks/${block.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order: index }),
+          })
+        )
+      );
+    } catch (error) {
+      console.error("Error reordering blocks:", error);
+      showNotification("Failed to reorder block", "error");
+      // Rollback to original state
+      setPage(originalPage);
     }
   };
 
@@ -472,7 +540,7 @@ export default function EditPagePage() {
                 </div>
               )}
 
-              <Link href={`/${page.slug}`} target="_blank">
+              <Link href={`/preview/${pageId}`} target="_blank">
                 <Button variant="outline" size="sm">
                   <Eye className="w-4 h-4 mr-2" />
                   Preview
@@ -652,7 +720,13 @@ export default function EditPagePage() {
             ) : (
               <div className="space-y-6">
                 {page.sections.map((section, sectionIndex) => (
-                  <div key={section.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <DraggableSection
+                    key={section.id}
+                    sectionId={section.id}
+                    index={sectionIndex}
+                    onReorder={handleSectionReorder}
+                  >
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     {/* Section Header */}
                     <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
                       <div className="flex justify-between items-center">
@@ -756,16 +830,23 @@ export default function EditPagePage() {
                         <>
                           <div className="space-y-4 mb-4">
                             {section.blocks.map((block, index) => (
-                              <BlockEditor
+                              <DraggableBlock
                                 key={block.id}
-                                block={block}
-                                onUpdate={(data) => updateBlock(section.id, block.id, data)}
-                                onDelete={() => deleteBlock(section.id, block.id)}
-                                onMoveUp={() => moveBlock(section.id, block.id, "up")}
-                                onMoveDown={() => moveBlock(section.id, block.id, "down")}
-                                isFirst={index === 0}
-                                isLast={index === section.blocks.length - 1}
-                              />
+                                blockId={block.id}
+                                sectionId={section.id}
+                                index={index}
+                                onReorder={(src, dest) => handleBlockReorder(section.id, src, dest)}
+                              >
+                                <BlockEditor
+                                  block={block}
+                                  onUpdate={(data) => updateBlock(section.id, block.id, data)}
+                                  onDelete={() => deleteBlock(section.id, block.id)}
+                                  onMoveUp={() => moveBlock(section.id, block.id, "up")}
+                                  onMoveDown={() => moveBlock(section.id, block.id, "down")}
+                                  isFirst={index === 0}
+                                  isLast={index === section.blocks.length - 1}
+                                />
+                              </DraggableBlock>
                             ))}
                           </div>
 
@@ -819,6 +900,7 @@ export default function EditPagePage() {
                       )}
                     </div>
                   </div>
+                  </DraggableSection>
                 ))}
               </div>
             )}

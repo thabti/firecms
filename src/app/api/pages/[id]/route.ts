@@ -66,12 +66,30 @@ export async function DELETE(
 
   try {
     const { id } = await params;
+    console.log(`[DELETE /api/pages/${id}] Starting deletion process`);
+    console.log(`[DELETE] Request ID: ${requestId}`);
+
     const adapter = await getStorageAdapter();
+    console.log(`[DELETE] Storage adapter obtained:`, adapter.constructor.name);
+
+    // Check if page exists before deletion
+    const existingPage = await adapter.getPage(id);
+    console.log(`[DELETE] Page exists check:`, existingPage ? 'Found' : 'Not found');
+    if (existingPage) {
+      console.log(`[DELETE] Page to delete:`, {
+        id: existingPage.id,
+        title: existingPage.title,
+        slug: existingPage.slug
+      });
+    }
+
     await adapter.deletePage(id);
+    console.log(`[DELETE] Page deleted successfully`);
 
     return createAPIResponse({ success: true }, { requestId });
   } catch (error) {
-    console.error("Error deleting page:", error);
+    console.error(`[DELETE] Error deleting page:`, error);
+    console.error(`[DELETE] Error stack:`, (error as Error).stack);
     return createErrorResponse(error as Error, 500, { requestId });
   }
 }

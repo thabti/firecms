@@ -29,8 +29,10 @@ export async function apiCall<T>(url: string, options?: RequestInit): Promise<T>
       }
     } catch {
       // If we can't parse the error as JSON, use the status text
+      console.log(errorMessage);
+      throw new Error(errorMessage);
     }
-    throw new Error(errorMessage);
+
   }
 
   const data = await response.json();

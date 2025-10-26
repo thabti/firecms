@@ -64,8 +64,20 @@ export class JSONAdapter implements StorageAdapter {
   }
 
   private async save(): Promise<void> {
-    this.db.lastUpdated = new Date().toISOString();
-    await fs.writeFile(this.dbPath, JSON.stringify(this.db, null, 2), "utf-8");
+    console.log(`[JSONAdapter] save() called, writing to: ${this.dbPath}`);
+    console.log(`[JSONAdapter] Pages to save: ${this.db.pages.length}`);
+
+    try {
+      this.db.lastUpdated = new Date().toISOString();
+      const jsonData = JSON.stringify(this.db, null, 2);
+      console.log(`[JSONAdapter] JSON data size: ${jsonData.length} bytes`);
+
+      await fs.writeFile(this.dbPath, jsonData, "utf-8");
+      console.log(`[JSONAdapter] File written successfully`);
+    } catch (error) {
+      console.error(`[JSONAdapter] Error in save():`, error);
+      throw error;
+    }
   }
 
   async getPages(): Promise<Page[]> {
@@ -117,11 +129,29 @@ export class JSONAdapter implements StorageAdapter {
   }
 
   async deletePage(id: string): Promise<void> {
-    const pageIndex = this.db.pages.findIndex((p) => p.id === id);
-    if (pageIndex === -1) throw new Error("Page not found");
+    console.log(`[JSONAdapter] deletePage called with id: ${id}`);
+    console.log(`[JSONAdapter] Current pages count: ${this.db.pages.length}`);
+    console.log(`[JSONAdapter] Page IDs in DB:`, this.db.pages.map(p => p.id));
 
+    const pageIndex = this.db.pages.findIndex((p) => p.id === id);
+    console.log(`[JSONAdapter] Page index found: ${pageIndex}`);
+
+    if (pageIndex === -1) {
+      console.error(`[JSONAdapter] Page not found with id: ${id}`);
+      throw new Error("Page not found");
+    }
+
+    console.log(`[JSONAdapter] Deleting page at index ${pageIndex}:`, this.db.pages[pageIndex]);
     this.db.pages.splice(pageIndex, 1);
-    await this.save();
+    console.log(`[JSONAdapter] Page deleted, remaining pages: ${this.db.pages.length}`);
+
+    try {
+      await this.save();
+      console.log(`[JSONAdapter] Database saved successfully after deletion`);
+    } catch (error) {
+      console.error(`[JSONAdapter] Error saving database after deletion:`, error);
+      throw error;
+    }
   }
 
   async createSection(data: CreateSectionInput): Promise<Section> {

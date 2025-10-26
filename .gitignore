@@ -51,3 +51,4 @@ build/Release
 
 # Uploaded images
 public/uploads/
+data/cms-data.json

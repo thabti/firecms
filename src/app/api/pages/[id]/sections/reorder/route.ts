@@ -45,7 +45,7 @@ export async function POST(
     // Update the page with reordered sections
     const updatedPage = await adapter.updatePage(pageId, {
       sections: reorderedSections,
-    });
+    } as any);
 
     return NextResponse.json(updatedPage);
   } catch (error) {
