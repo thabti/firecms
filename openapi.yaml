@@ -1,0 +1,803 @@
+openapi: 3.0.3
+info:
+  title: FireCMS API
+  version: 1.0.0
+  description: |
+    Modern headless CMS API built with Next.js, Firebase, and pluggable storage adapters.
+
+    ## Features
+    - RESTful API design
+    - Block-based content management
+    - Multiple storage backends (Firebase, SQLite, JSON)
+    - API versioning and timestamps on all responses
+    - Request ID tracking for debugging
+
+  contact:
+    name: Sabeur Thabti
+    url: https://github.com/sabeurthabti/firecms
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://your-domain.com
+    description: Production server
+
+tags:
+  - name: Pages
+    description: Page management operations
+  - name: Sections
+    description: Section management within pages
+  - name: Blocks
+    description: Block management within sections
+  - name: Upload
+    description: Image upload and optimization
+
+components:
+  schemas:
+    # Core Models
+    Page:
+      type: object
+      required:
+        - id
+        - slug
+        - title
+        - sections
+        - published
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique page identifier
+        slug:
+          type: string
+          description: URL-friendly page identifier
+          example: about-us
+        title:
+          type: string
+          description: Page title
+          example: About Us
+        description:
+          type: string
+          nullable: true
+          description: Optional page description
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'
+        published:
+          type: boolean
+          description: Publication status
+        version:
+          type: integer
+          description: Version number for optimistic locking
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Section:
+      type: object
+      required:
+        - id
+        - title
+        - blocks
+        - order
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Introduction
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+        order:
+          type: integer
+          description: Display order within page
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Block:
+      type: object
+      required:
+        - id
+        - type
+        - order
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [text, heading, image, list, quote]
+        order:
+          type: integer
+          description: Display order within section
+      discriminator:
+        propertyName: type
+        mapping:
+          text: '#/components/schemas/TextBlock'
+          heading: '#/components/schemas/HeadingBlock'
+          image: '#/components/schemas/ImageBlock'
+          list: '#/components/schemas/ListBlock'
+          quote: '#/components/schemas/QuoteBlock'
+
+    TextBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required:
+            - content
+          properties:
+            content:
+              type: string
+              example: This is a paragraph of text.
+
+    HeadingBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required:
+            - content
+            - level
+          properties:
+            content:
+              type: string
+              example: Main Heading
+            level:
+              type: integer
+              minimum: 1
+              maximum: 6
+              example: 2
+
+    ImageBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required:
+            - url
+            - alt
+          properties:
+            url:
+              type: string
+              format: uri
+              example: https://storage.example.com/image.jpg
+            alt:
+              type: string
+              example: Descriptive image text
+            caption:
+              type: string
+              nullable: true
+            urls:
+              type: object
+              description: Multiple image sizes
+              properties:
+                thumbnail:
+                  type: string
+                medium:
+                  type: string
+                large:
+                  type: string
+                original:
+                  type: string
+            dimensions:
+              type: object
+              properties:
+                width:
+                  type: integer
+                height:
+                  type: integer
+
+    ListBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                type: string
+              example: ["First item", "Second item", "Third item"]
+            ordered:
+              type: boolean
+              description: Whether list is ordered (numbered) or unordered
+              default: false
+
+    QuoteBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required:
+            - content
+          properties:
+            content:
+              type: string
+              example: Innovation distinguishes between a leader and a follower.
+            author:
+              type: string
+              nullable: true
+              example: Steve Jobs
+
+    # Input DTOs
+    CreatePageInput:
+      type: object
+      required:
+        - slug
+        - title
+      properties:
+        slug:
+          type: string
+          pattern: ^[a-z0-9-]+$
+        title:
+          type: string
+        description:
+          type: string
+        published:
+          type: boolean
+          default: false
+
+    UpdatePageInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        published:
+          type: boolean
+
+    CreateSectionInput:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        order:
+          type: integer
+
+    UpdateSectionInput:
+      type: object
+      properties:
+        title:
+          type: string
+        order:
+          type: integer
+
+    CreateBlockInput:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [text, heading, image, list, quote]
+        content:
+          type: string
+        url:
+          type: string
+        alt:
+          type: string
+        caption:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          maximum: 6
+        items:
+          type: array
+          items:
+            type: string
+        ordered:
+          type: boolean
+        author:
+          type: string
+        order:
+          type: integer
+
+    UpdateBlockInput:
+      type: object
+      properties:
+        content:
+          type: string
+        url:
+          type: string
+        alt:
+          type: string
+        caption:
+          type: string
+        level:
+          type: integer
+        items:
+          type: array
+          items:
+            type: string
+        ordered:
+          type: boolean
+        author:
+          type: string
+        order:
+          type: integer
+
+    # API Response Wrapper
+    APIResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          description: Response data (type varies by endpoint)
+        meta:
+          type: object
+          required:
+            - version
+            - timestamp
+          properties:
+            version:
+              type: string
+              example: v1
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+              example: req_1234567890_abc123
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - meta
+      properties:
+        error:
+          type: object
+          required:
+            - message
+            - status
+          properties:
+            message:
+              type: string
+            status:
+              type: integer
+            details:
+              type: object
+        meta:
+          type: object
+          properties:
+            version:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+
+    UploadResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          description: Original image URL
+        urls:
+          type: object
+          properties:
+            thumbnail:
+              type: string
+            medium:
+              type: string
+            large:
+              type: string
+            original:
+              type: string
+        dimensions:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+
+paths:
+  # Pages
+  /api/pages:
+    get:
+      tags:
+        - Pages
+      summary: List all pages
+      description: Retrieve a list of all pages with their sections and blocks
+      responses:
+        '200':
+          description: Successfully retrieved pages
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Page'
+
+    post:
+      tags:
+        - Pages
+      summary: Create a new page
+      description: Create a new page with the specified properties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePageInput'
+      responses:
+        '201':
+          description: Page created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Page'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/pages/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+
+    get:
+      tags:
+        - Pages
+      summary: Get a page by ID
+      responses:
+        '200':
+          description: Page found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Page'
+        '404':
+          description: Page not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Pages
+      summary: Update a page
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePageInput'
+      responses:
+        '200':
+          description: Page updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Page'
+
+    delete:
+      tags:
+        - Pages
+      summary: Delete a page
+      responses:
+        '200':
+          description: Page deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+
+  # Sections
+  /api/pages/{id}/sections:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+
+    post:
+      tags:
+        - Sections
+      summary: Create a section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSectionInput'
+      responses:
+        '201':
+          description: Section created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Section'
+
+  /api/pages/{id}/sections/{sectionId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Section ID
+
+    put:
+      tags:
+        - Sections
+      summary: Update a section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSectionInput'
+      responses:
+        '200':
+          description: Section updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+
+    delete:
+      tags:
+        - Sections
+      summary: Delete a section
+      responses:
+        '200':
+          description: Section deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+
+  # Blocks
+  /api/pages/{id}/sections/{sectionId}/blocks:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Section ID
+
+    post:
+      tags:
+        - Blocks
+      summary: Create a block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlockInput'
+            examples:
+              textBlock:
+                summary: Text block
+                value:
+                  type: text
+                  content: This is a paragraph.
+              headingBlock:
+                summary: Heading block
+                value:
+                  type: heading
+                  content: Section Title
+                  level: 2
+              imageBlock:
+                summary: Image block
+                value:
+                  type: image
+                  url: https://example.com/image.jpg
+                  alt: Description
+              listBlock:
+                summary: List block
+                value:
+                  type: list
+                  items: ["Item 1", "Item 2", "Item 3"]
+                  ordered: false
+              quoteBlock:
+                summary: Quote block
+                value:
+                  type: quote
+                  content: Inspiring quote text
+                  author: Famous Person
+      responses:
+        '201':
+          description: Block created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Block'
+
+  /api/pages/{id}/sections/{sectionId}/blocks/{blockId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Section ID
+      - name: blockId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Block ID
+
+    put:
+      tags:
+        - Blocks
+      summary: Update a block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBlockInput'
+      responses:
+        '200':
+          description: Block updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+
+    delete:
+      tags:
+        - Blocks
+      summary: Delete a block
+      responses:
+        '200':
+          description: Block deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+
+  # Upload
+  /api/upload:
+    post:
+      tags:
+        - Upload
+      summary: Upload an image
+      description: |
+        Upload and optimize an image. The API will:
+        - Compress the image
+        - Generate multiple sizes (thumbnail, medium, large)
+        - Auto-rotate based on EXIF data
+        - Return URLs for all sizes
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (JPEG, PNG, WebP, GIF)
+      responses:
+        '200':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Invalid file type or upload error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
