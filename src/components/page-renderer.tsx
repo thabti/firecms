@@ -7,7 +7,7 @@ function renderBlock(block: Block, index: number) {
   switch (block.type) {
     case "text":
       return (
-        <div key={block.id} className="prose max-w-none">
+        <div key={block.id} data-block-cms-id={block.id} data-block-type="text" className="prose max-w-none">
           <p className="text-gray-700 leading-relaxed">{block.content}</p>
         </div>
       );
@@ -24,6 +24,8 @@ function renderBlock(block: Block, index: number) {
       return (
         <HeadingTag
           key={block.id}
+          data-block-cms-id={block.id}
+          data-block-type="heading"
           className={`${headingClasses[block.level]} text-gray-900 mb-4`}
         >
           {block.content}
@@ -31,15 +33,16 @@ function renderBlock(block: Block, index: number) {
       );
     case "image":
       return (
-        <OptimizedImage
-          key={block.id}
-          block={block}
-          priority={index === 0}
-        />
+        <div key={block.id} data-block-cms-id={block.id} data-block-type="image">
+          <OptimizedImage
+            block={block}
+            priority={index === 0}
+          />
+        </div>
       );
     case "list":
       return (
-        <div key={block.id} className="prose max-w-none">
+        <div key={block.id} data-block-cms-id={block.id} data-block-type="list" className="prose max-w-none">
           {block.ordered ? (
             <ol className="list-decimal list-inside space-y-2 text-gray-700">
               {block.items.map((item, i) => (
@@ -59,6 +62,8 @@ function renderBlock(block: Block, index: number) {
       return (
         <blockquote
           key={block.id}
+          data-block-cms-id={block.id}
+          data-block-type="quote"
           className="border-l-4 border-blue-500 pl-6 py-4 my-8 bg-blue-50 rounded-r"
         >
           <p className="text-lg italic text-gray-700">{block.content}</p>
@@ -94,7 +99,7 @@ export function PageRenderer({ page, showMetadata = true }: PageRendererProps) {
           {page.sections
             .sort((a, b) => a.order - b.order)
             .map((section) => (
-              <section key={section.id}>
+              <section key={section.id} data-section-cms-id={section.id}>
                 <h2 className="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-200">
                   {section.title}
                 </h2>
