@@ -15,14 +15,26 @@ export async function PUT(
     const { id, sectionId, blockId } = await params;
     const body = await request.json();
     const data: UpdateBlockInput = {
+      // Text & Heading
       content: body.content,
+      level: body.level,
+      // Image & Video
       url: body.url,
+      urls: body.urls,
       alt: body.alt,
       caption: body.caption,
-      level: body.level,
+      dimensions: body.dimensions,
+      // List
       items: body.items,
       ordered: body.ordered,
+      // Quote
       author: body.author,
+      // Action
+      actionType: body.actionType,
+      label: body.label,
+      style: body.style,
+      openInNewTab: body.openInNewTab,
+      // General
       order: body.order,
     };
 

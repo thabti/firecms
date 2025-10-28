@@ -6,6 +6,7 @@ import { Save, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import slug from "slug";
 import { apiCall } from "@/lib/api-client";
+import { fullPageTemplates } from "@/lib/templates";
 import type { Page } from "@/types";
 
 export default function NewPagePage() {
@@ -15,8 +16,8 @@ export default function NewPagePage() {
     title: "",
     slug: "",
     description: "",
-    published: false,
   });
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [manualSlugEdit, setManualSlugEdit] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,11 +27,32 @@ export default function NewPagePage() {
     try {
       const newPage = await apiCall<Page>("/api/pages", {
         method: "POST",
-        body: JSON.stringify({
-          ...formData,
-          blocks: [],
-        }),
+        body: JSON.stringify(formData),
       });
+
+      // If a template is selected, create sections and blocks
+      if (selectedTemplate) {
+        const template = fullPageTemplates.find(t => t.id === selectedTemplate);
+        if (template) {
+          for (const sectionTemplate of template.sections) {
+            // Create section
+            const newSection = await apiCall(`/api/pages/${newPage.id}/sections`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title: sectionTemplate.title }),
+            });
+
+            // Create blocks in the section
+            for (const block of sectionTemplate.blocks) {
+              await apiCall(`/api/pages/${newPage.id}/sections/${newSection.id}/blocks`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(block),
+              });
+            }
+          }
+        }
+      }
 
       router.push(`/admin/pages/${newPage.id}`);
     } catch (error) {
@@ -55,20 +77,19 @@ export default function NewPagePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl py-8 px-4">
-        <div className="mb-6">
-          <Link
-            href="/admin/pages"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Pages
-          </Link>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-6">
+        <Link
+          href="/admin/pages"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Pages
+        </Link>
+      </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Page</h1>
+      <div className="max-w-4xl bg-white rounded-lg border border-gray-200 p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Page</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -121,17 +142,26 @@ export default function NewPagePage() {
               />
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="published"
-                checked={formData.published}
-                onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="published" className="ml-2 text-sm font-medium text-gray-700">
-                Publish immediately
+            <div>
+              <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-2">
+                Start with Template (Optional)
               </label>
+              <select
+                id="template"
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Blank Page</option>
+                {fullPageTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} - {template.description}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Choose a template to pre-populate your page with sections and content
+              </p>
             </div>
 
             <div className="flex gap-3 pt-4 border-t">
@@ -152,7 +182,6 @@ export default function NewPagePage() {
             </div>
           </form>
         </div>
-      </div>
     </div>
   );
 }

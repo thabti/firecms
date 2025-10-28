@@ -14,7 +14,9 @@ import { TemplateSelector } from "@/components/template-selector";
 import { DraggableSection } from "@/components/draggable-section";
 import { DraggableBlock } from "@/components/draggable-block";
 import { EditableSectionTitle } from "@/components/editable-section-title";
+import { GlobalSaveButton } from "@/components/global-save-button";
 import { Button } from "@/components/ui/button";
+import { usePageEditorStore } from "@/store/page-editor-store";
 import type { Page, Section, Block } from "@/types";
 import type { Template } from "@/types/templates";
 
@@ -23,10 +25,23 @@ export default function EditPagePage() {
   const params = useParams();
   const pageId = params.id as string;
 
+  // Zustand store
+  const {
+    page,
+    setPage: setPageInStore,
+    updatePage: updatePageInStore,
+    addSection: addSectionToStore,
+    updateSection: updateSectionInStore,
+    deleteSection: deleteSectionFromStore,
+    reorderSections: reorderSectionsInStore,
+    updateBlock: updateBlockInStore,
+    addBlock: addBlockToStore,
+    deleteBlock: deleteBlockFromStore,
+  } = usePageEditorStore();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error" | null>(null);
-  const [page, setPage] = useState<Page | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -43,7 +58,7 @@ export default function EditPagePage() {
   const fetchPage = async () => {
     try {
       const data = await apiCall<Page>(`/api/pages/${pageId}`);
-      setPage(data);
+      setPageInStore(data); // Use Zustand store
       setFormData({
         title: data.title,
         slug: data.slug,
@@ -79,7 +94,7 @@ export default function EditPagePage() {
       });
 
       // Update local page state with new metadata
-      setPage(prev => prev ? { ...prev, ...formData } : null);
+      updatePageInStore(formData);
 
       showNotification("Page updated successfully!", "success");
     } catch (error) {
@@ -117,11 +132,8 @@ export default function EditPagePage() {
         body: JSON.stringify({ title }),
       });
 
-      // Optimistic update: Add section to local state immediately
-      setPage(prev => prev ? {
-        ...prev,
-        sections: [...prev.sections, newSection]
-      } : null);
+      // Add section to store
+      addSectionToStore(newSection);
 
       showNotification("Section added", "success");
     } catch (error) {
@@ -133,11 +145,8 @@ export default function EditPagePage() {
   const deleteSection = async (sectionId: string) => {
     if (!confirm("Delete this section and all its blocks?")) return;
 
-    // Optimistic update: Remove section from local state immediately
-    setPage(prev => prev ? {
-      ...prev,
-      sections: prev.sections.filter(s => s.id !== sectionId)
-    } : null);
+    // Delete section from store
+    deleteSectionFromStore(sectionId);
 
     try {
       await apiCall(`/api/pages/${pageId}/sections/${sectionId}`, {
@@ -153,13 +162,8 @@ export default function EditPagePage() {
   };
 
   const updateSectionTitle = async (sectionId: string, newTitle: string) => {
-    // Optimistic update: Update section title in local state immediately
-    setPage(prev => prev ? {
-      ...prev,
-      sections: prev.sections.map(s =>
-        s.id === sectionId ? { ...s, title: newTitle } : s
-      )
-    } : null);
+    // Update section title in store
+    updateSectionInStore(sectionId, { title: newTitle });
 
     try {
       await apiCall(`/api/pages/${pageId}/sections/${sectionId}`, {
@@ -183,8 +187,8 @@ export default function EditPagePage() {
     const [section] = sections.splice(sectionIndex, 1);
     sections.splice(sectionIndex - 1, 0, section);
 
-    // Optimistic update
-    setPage({ ...page, sections });
+    // Update store
+    reorderSectionsInStore(sections);
 
     try {
       // Update order on server
@@ -207,8 +211,8 @@ export default function EditPagePage() {
     const [section] = sections.splice(sectionIndex, 1);
     sections.splice(sectionIndex + 1, 0, section);
 
-    // Optimistic update
-    setPage({ ...page, sections });
+    // Update store
+    reorderSectionsInStore(sections);
 
     try {
       // Update order on server
@@ -231,8 +235,8 @@ export default function EditPagePage() {
     const [section] = sections.splice(sourceIndex, 1);
     sections.splice(destinationIndex, 0, section);
 
-    // Optimistic update
-    setPage({ ...page, sections });
+    // Update store
+    reorderSectionsInStore(sections);
 
     try {
       // Update order on server
@@ -254,9 +258,6 @@ export default function EditPagePage() {
     const sectionIndex = page.sections.findIndex(s => s.id === sectionId);
     if (sectionIndex === -1) return;
 
-    // Save original state for rollback
-    const originalPage = page;
-
     const sections = [...page.sections];
     const section = { ...sections[sectionIndex] };
     const blocks = [...section.blocks];
@@ -265,11 +266,8 @@ export default function EditPagePage() {
     const [block] = blocks.splice(sourceIndex, 1);
     blocks.splice(destinationIndex, 0, block);
 
-    section.blocks = blocks;
-    sections[sectionIndex] = section;
-
-    // Optimistic update
-    setPage({ ...page, sections });
+    // Update store
+    updateSectionInStore(sectionId, { blocks });
 
     try {
       // Update order for all blocks in the section
@@ -285,8 +283,8 @@ export default function EditPagePage() {
     } catch (error) {
       console.error("Error reordering blocks:", error);
       showNotification("Failed to reorder block", "error");
-      // Rollback to original state
-      setPage(originalPage);
+      // Revert on error
+      fetchPage();
     }
   };
 
@@ -325,91 +323,31 @@ export default function EditPagePage() {
         break;
     }
 
-    try {
-      const newBlock = await apiCall<Block>(`/api/pages/${pageId}/sections/${sectionId}/blocks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(blockData),
-      });
+    const section = page?.sections.find(s => s.id === sectionId);
+    if (!section) return;
 
-      // Optimistic update: Add block to local state immediately
-      setPage(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          sections: prev.sections.map(s =>
-            s.id === sectionId
-              ? { ...s, blocks: [...s.blocks, newBlock] }
-              : s
-          )
-        };
-      });
-    } catch (error) {
-      console.error("Error adding block:", error);
-      showNotification("Failed to add block", "error");
-    }
+    // Create a temporary block with a unique ID
+    const newBlock = {
+      ...blockData,
+      id: `temp-${Date.now()}`,
+      order: section.blocks.length,
+    } as Block;
+
+    // Use Zustand store to add block (no API call - saved with global save button)
+    addBlockToStore(sectionId, newBlock);
   };
 
-  const updateBlock = async (sectionId: string, blockId: string, data: any) => {
-    // Optimistic update: Update block in local state immediately
-    setPage(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: prev.sections.map(s =>
-          s.id === sectionId
-            ? {
-                ...s,
-                blocks: s.blocks.map(b =>
-                  b.id === blockId ? { ...b, ...data } : b
-                )
-              }
-            : s
-        )
-      };
-    });
-
-    try {
-      await apiCall(`/api/pages/${pageId}/sections/${sectionId}/blocks/${blockId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-    } catch (error) {
-      console.error("Error updating block:", error);
-      showNotification("Failed to update block", "error");
-      // Revert on error
-      fetchPage();
-    }
+  const updateBlock = (sectionId: string, blockId: string, data: any) => {
+    // Use Zustand store to update block (no API call)
+    updateBlockInStore(sectionId, blockId, data);
   };
 
-  const deleteBlock = async (sectionId: string, blockId: string) => {
-    // Optimistic update: Remove block from local state immediately
-    setPage(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: prev.sections.map(s =>
-          s.id === sectionId
-            ? { ...s, blocks: s.blocks.filter(b => b.id !== blockId) }
-            : s
-        )
-      };
-    });
-
-    try {
-      await apiCall(`/api/pages/${pageId}/sections/${sectionId}/blocks/${blockId}`, {
-        method: "DELETE",
-      });
-    } catch (error) {
-      console.error("Error deleting block:", error);
-      showNotification("Failed to delete block", "error");
-      // Revert on error
-      fetchPage();
-    }
+  const deleteBlock = (sectionId: string, blockId: string) => {
+    // Use Zustand store to delete block (no API call - saved with global save button)
+    deleteBlockFromStore(sectionId, blockId);
   };
 
-  const moveBlock = async (sectionId: string, blockId: string, direction: "up" | "down") => {
+  const moveBlock = (sectionId: string, blockId: string, direction: "up" | "down") => {
     const section = page?.sections.find(s => s.id === sectionId);
     if (!section) return;
 
@@ -419,85 +357,33 @@ export default function EditPagePage() {
     const targetIndex = direction === "up" ? blockIndex - 1 : blockIndex + 1;
     if (targetIndex < 0 || targetIndex >= section.blocks.length) return;
 
-    // Optimistic update: Reorder blocks in local state immediately
-    setPage(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: prev.sections.map(s => {
-          if (s.id !== sectionId) return s;
+    // Reorder blocks in local state
+    const newBlocks = [...section.blocks];
+    [newBlocks[blockIndex], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[blockIndex]];
 
-          const newBlocks = [...s.blocks];
-          [newBlocks[blockIndex], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[blockIndex]];
-
-          // Update order property
-          return {
-            ...s,
-            blocks: newBlocks.map((block, idx) => ({ ...block, order: idx }))
-          };
-        })
-      };
-    });
-
-    // Update order in background (only for affected blocks)
-    try {
-      const block1 = section.blocks[blockIndex];
-      const block2 = section.blocks[targetIndex];
-
-      await Promise.all([
-        apiCall(`/api/pages/${pageId}/sections/${sectionId}/blocks/${block1.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order: targetIndex }),
-        }),
-        apiCall(`/api/pages/${pageId}/sections/${sectionId}/blocks/${block2.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order: blockIndex }),
-        })
-      ]);
-    } catch (error) {
-      console.error("Error moving block:", error);
-      showNotification("Failed to move block", "error");
-      // Revert on error
-      fetchPage();
-    }
+    // Update order property and use Zustand store
+    const reorderedBlocks = newBlocks.map((block, idx) => ({ ...block, order: idx }));
+    updateSectionInStore(sectionId, { blocks: reorderedBlocks });
   };
 
-  const handleTemplateSelect = async (template: Template) => {
+  const handleTemplateSelect = (template: Template) => {
     if (!selectedSectionId) return;
 
-    try {
-      // Create all blocks in parallel
-      const newBlocks = await Promise.all(
-        template.blocks.map(block =>
-          apiCall<Block>(`/api/pages/${pageId}/sections/${selectedSectionId}/blocks`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(block),
-          })
-        )
-      );
+    const section = page?.sections.find(s => s.id === selectedSectionId);
+    if (!section) return;
 
-      // Optimistic update: Add all blocks to local state immediately
-      setPage(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          sections: prev.sections.map(s =>
-            s.id === selectedSectionId
-              ? { ...s, blocks: [...s.blocks, ...newBlocks] }
-              : s
-          )
-        };
-      });
+    // Create temporary blocks with unique IDs
+    const newBlocks = template.blocks.map((block, idx) => ({
+      ...block,
+      id: `temp-${Date.now()}-${idx}`,
+      order: section.blocks.length + idx,
+    } as Block));
 
-      setSelectedSectionId(null);
-      showNotification(`Template "${template.name}" applied`, "success");
-    } catch (error) {
-      console.error("Error applying template:", error);
-      showNotification("Failed to apply template", "error");
-    }
+    // Add all blocks to the section using Zustand store
+    newBlocks.forEach(block => addBlockToStore(selectedSectionId, block));
+
+    setSelectedSectionId(null);
+    showNotification(`Template "${template.name}" applied`, "success");
   };
 
   if (loading) {
@@ -533,7 +419,7 @@ export default function EditPagePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="container mx-auto max-w-7xl px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
@@ -604,7 +490,7 @@ export default function EditPagePage() {
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto max-w-7xl px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-6">
             <button
               onClick={() => setActiveTab("content")}
@@ -632,7 +518,7 @@ export default function EditPagePage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto max-w-7xl py-8 px-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "settings" ? (
           /* Page Settings */
           <div className="max-w-3xl mx-auto">
@@ -993,6 +879,9 @@ export default function EditPagePage() {
           }}
         />
       )}
+
+      {/* Global Save Button */}
+      <GlobalSaveButton pageId={pageId} />
     </div>
   );
 }

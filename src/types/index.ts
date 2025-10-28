@@ -137,25 +137,65 @@ export interface CreateBlockInput {
   pageId: string;
   sectionId: string;
   type: BlockType;
+  // Text & Heading
   content?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  // Image & Video
   url?: string;
+  urls?: {
+    original?: string;
+    thumbnail?: string;
+    medium?: string;
+    large?: string;
+  };
   alt?: string;
   caption?: string;
-  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  dimensions?: {
+    width?: number;
+    height?: number;
+  };
+  // List
   items?: string[];
   ordered?: boolean;
+  // Quote
   author?: string;
+  // Action
+  actionType?: "button" | "link";
+  label?: string;
+  style?: "primary" | "secondary" | "outline";
+  openInNewTab?: boolean;
+  // General
   order?: number;
 }
 
 export interface UpdateBlockInput {
+  // Text & Heading
   content?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  // Image & Video
   url?: string;
+  urls?: {
+    original?: string;
+    thumbnail?: string;
+    medium?: string;
+    large?: string;
+  };
   alt?: string;
   caption?: string;
-  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  dimensions?: {
+    width?: number;
+    height?: number;
+  };
+  // List
   items?: string[];
   ordered?: boolean;
+  // Quote
   author?: string;
+  // Action
+  actionType?: "button" | "link";
+  label?: string;
+  style?: "primary" | "secondary" | "outline";
+  openInNewTab?: boolean;
+  // General
   order?: number;
 }

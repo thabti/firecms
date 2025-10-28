@@ -16,14 +16,26 @@ export async function POST(
       pageId: id,
       sectionId: sectionId,
       type: body.type,
+      // Text & Heading
       content: body.content,
+      level: body.level,
+      // Image & Video
       url: body.url,
+      urls: body.urls,
       alt: body.alt,
       caption: body.caption,
-      level: body.level,
+      dimensions: body.dimensions,
+      // List
       items: body.items,
       ordered: body.ordered,
+      // Quote
       author: body.author,
+      // Action
+      actionType: body.actionType,
+      label: body.label,
+      style: body.style,
+      openInNewTab: body.openInNewTab,
+      // General
       order: body.order,
     };
 

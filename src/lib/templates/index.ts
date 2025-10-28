@@ -1,13 +1,16 @@
-import type { Template } from "@/types/templates";
+import type { Template, PageTemplate } from "@/types/templates";
 import { pageTemplates } from "./page-templates";
 import { marketingTemplates } from "./marketing-templates";
 import { contentTemplates } from "./content-templates";
+import { fullPageTemplates } from "./full-page-templates";
 
 export const templates: Template[] = [
   ...pageTemplates,
   ...marketingTemplates,
   ...contentTemplates,
 ];
+
+export { fullPageTemplates };
 
 export const templateCategories = [
   {
@@ -33,4 +36,8 @@ export function getTemplatesByCategory(category: string): Template[] {
 
 export function getTemplateById(id: string): Template | undefined {
   return templates.find((t) => t.id === id);
+}
+
+export function getPageTemplateById(id: string): PageTemplate | undefined {
+  return fullPageTemplates.find((t) => t.id === id);
 }
