@@ -88,15 +88,14 @@ export class SQLiteAdapter implements StorageAdapter {
 
     this.db
       .prepare(
-        `INSERT INTO pages (id, slug, title, description, published, version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
+        `INSERT INTO pages (id, slug, title, description, version, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 1, ?, ?)`
       )
       .run(
         id,
         data.slug,
         data.title,
         data.description || null,
-        data.published ? 1 : 0,
         now,
         now
       );
@@ -107,7 +106,6 @@ export class SQLiteAdapter implements StorageAdapter {
       title: data.title,
       description: data.description,
       sections: [],
-      published: data.published ?? false,
       version: 1,
       createdAt: new Date(now),
       updatedAt: new Date(now),
@@ -125,10 +123,6 @@ export class SQLiteAdapter implements StorageAdapter {
     if (data.description !== undefined) {
       updates.push("description = ?");
       params.push(data.description);
-    }
-    if (data.published !== undefined) {
-      updates.push("published = ?");
-      params.push(data.published ? 1 : 0);
     }
 
     updates.push("updated_at = ?", "version = version + 1");

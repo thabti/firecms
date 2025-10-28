@@ -102,7 +102,6 @@ export class JSONAdapter implements StorageAdapter {
       id: crypto.randomUUID(),
       ...data,
       sections: [],
-      published: data.published ?? false,
       version: 1,
       createdAt: now,
       updatedAt: now,

@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       slug: body.slug,
       title: body.title,
       description: body.description,
-      published: body.published ?? false,
     };
 
     const adapter = await getStorageAdapter();

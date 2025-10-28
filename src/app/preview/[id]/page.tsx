@@ -62,12 +62,7 @@ export default function PreviewPage() {
       {/* Preview banner */}
       <div className="sticky top-0 z-50 bg-yellow-100 border-b-2 border-yellow-300 px-4 py-2 text-center">
         <p className="text-sm font-medium text-yellow-900">
-          📋 Preview Mode - This is how your page will look when published
-          {!page.published && (
-            <span className="ml-2 px-2 py-1 bg-yellow-200 rounded text-xs">
-              DRAFT
-            </span>
-          )}
+          📋 Preview Mode - This is how your page will look when live
         </p>
       </div>
 

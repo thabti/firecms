@@ -37,7 +37,6 @@ export async function PUT(
     const data: UpdatePageInput = {
       title: body.title,
       description: body.description,
-      published: body.published,
     };
 
     const adapter = await getStorageAdapter();

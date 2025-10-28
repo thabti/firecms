@@ -7,7 +7,7 @@ import Link from "next/link";
 import slug from "slug";
 import { apiCall } from "@/lib/api-client";
 import { fullPageTemplates } from "@/lib/templates";
-import type { Page } from "@/types";
+import type { Page, Section } from "@/types";
 
 export default function NewPagePage() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function NewPagePage() {
         if (template) {
           for (const sectionTemplate of template.sections) {
             // Create section
-            const newSection = await apiCall(`/api/pages/${newPage.id}/sections`, {
+            const newSection = await apiCall<Section>(`/api/pages/${newPage.id}/sections`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ title: sectionTemplate.title }),

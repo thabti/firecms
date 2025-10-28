@@ -23,27 +23,19 @@ export function GlobalSaveButton({ pageId }: GlobalSaveButtonProps) {
         for (const block of section.blocks) {
           // Check if this is a new block (has temp ID)
           if (block.id.startsWith('temp-')) {
-            // Create new block
+            // Create new block - remove temp ID and spread all properties
+            const { id, ...blockWithoutId } = block;
             await apiCall(`/api/pages/${pageId}/sections/${section.id}/blocks`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: block.type,
-                order: block.order,
-                ...block,
-                id: undefined, // Remove temp ID, let server generate real one
-              }),
+              body: JSON.stringify(blockWithoutId),
             });
           } else {
-            // Update existing block
+            // Update existing block - spread all properties
             await apiCall(`/api/pages/${pageId}/sections/${section.id}/blocks/${block.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: block.type,
-                order: block.order,
-                ...block
-              }),
+              body: JSON.stringify(block),
             });
           }
         }

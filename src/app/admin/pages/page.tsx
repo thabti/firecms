@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Edit, Trash2, Eye, Loader2, FileText, Copy } from "lucide-react";
 import Link from "next/link";
-import type { Page } from "@/types";
+import type { Page, Section } from "@/types";
 import { apiCall } from "@/lib/api-client";
 
 export default function PagesPage() {
@@ -56,7 +56,7 @@ export default function PagesPage() {
 
       // Clone all sections and blocks
       for (const section of page.sections) {
-        const newSection = await apiCall(`/api/pages/${newPage.id}/sections`, {
+        const newSection = await apiCall<Section>(`/api/pages/${newPage.id}/sections`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: section.title }),
@@ -64,14 +64,12 @@ export default function PagesPage() {
 
         // Clone all blocks in the section
         for (const block of section.blocks) {
+          // Spread all block properties except id (server will generate new ID)
+          const { id, ...blockWithoutId } = block;
           await apiCall(`/api/pages/${newPage.id}/sections/${newSection.id}/blocks`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: block.type,
-              content: block.content,
-              order: block.order,
-            }),
+            body: JSON.stringify(blockWithoutId),
           });
         }
       }

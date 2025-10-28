@@ -9,8 +9,8 @@ function renderBlock(block: Block, index: number) {
   switch (block.type) {
     case "text":
       return (
-        <div key={block.id} data-block-cms-id={block.id} data-block-type="text" className="prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} className="text-gray-700 leading-relaxed">
+        <div key={block.id} data-block-cms-id={block.id} data-block-type="text" className="prose max-w-none text-gray-700 leading-relaxed">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {block.content}
           </ReactMarkdown>
         </div>

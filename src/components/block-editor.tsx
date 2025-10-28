@@ -193,7 +193,7 @@ export function BlockEditor({
                 <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
                 {(() => {
                   const HeadingTag = `h${editData.level || 2}` as keyof React.JSX.IntrinsicElements;
-                  const sizes = {
+                  const sizes: Record<number, string> = {
                     1: "text-4xl",
                     2: "text-3xl",
                     3: "text-2xl",
@@ -201,8 +201,9 @@ export function BlockEditor({
                     5: "text-lg",
                     6: "text-base",
                   };
+                  const level = editData.level || 2;
                   return (
-                    <HeadingTag className={`font-bold ${sizes[editData.level || 2]}`}>
+                    <HeadingTag className={`font-bold ${sizes[level]}`}>
                       {editData.content}
                     </HeadingTag>
                   );
