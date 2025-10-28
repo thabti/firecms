@@ -2,12 +2,12 @@ import Link from "next/link";
 import { LayoutDashboard, FileText, Image as ImageIcon, Users, Settings } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Posts", href: "/admin/posts", icon: FileText },
+  // { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  // { name: "Posts", href: "/admin/posts", icon: FileText },
   { name: "Pages", href: "/admin/pages", icon: FileText },
   { name: "Media", href: "/admin/media", icon: ImageIcon },
-  { name: "Team", href: "/admin/team", icon: Users },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  // { name: "Team", href: "/admin/team", icon: Users },
+  // { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export default function AdminLayout({

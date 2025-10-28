@@ -1,5 +1,5 @@
 /**
- * PostgreSQL database schema for FireCMS
+ * PostgreSQL database schema for ThabtiCMS
  * Compatible with Neon serverless Postgres
  */
 export const SCHEMA_SQL = `

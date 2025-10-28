@@ -46,7 +46,7 @@ export async function generateMetadata({
     }
 
     return {
-      title: `${page.title} | FireCMS`,
+      title: `${page.title} | ThabtiCMS`,
       description: page.description || `Read about ${page.title}`,
       openGraph: {
         title: page.title,
@@ -67,7 +67,7 @@ export async function generateMetadata({
   } catch (error) {
     console.error("Error generating metadata:", error);
     return {
-      title: "FireCMS",
+      title: "ThabtiCMS",
     };
   }
 }

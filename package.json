@@ -1,11 +1,11 @@
 {
-  "name": "firecms",
+  "name": "thabticms",
   "version": "2.0.0",
   "description": "Modern CMS built with Next.js and Tailwind CSS",
   "scripts": {
     "dev:script": "bash scripts/start-dev.sh",
-    "dev": "next dev --turbopack",
-    "dev:webpack": "next dev",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -42,6 +42,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "sharp": "^0.34.4",
     "slug": "^9.1.0",
     "tailwind-merge": "^3.3.1",

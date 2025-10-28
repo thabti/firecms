@@ -7,13 +7,13 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            FireCMS
+            ThabtiCMS
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Modern Content Management System
           </p>
           <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-            Built with Next.js 14+, Firebase, Tailwind CSS, and shadcn/ui
+            Built with Next.js 15, Tailwind CSS, and shadcn/ui
           </p>
         </div>
 
@@ -28,9 +28,9 @@ export default function HomePage() {
 
           <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
             <Database className="w-12 h-12 text-purple-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Firebase Powered</h3>
+            <h3 className="text-xl font-semibold mb-2">Flexible Storage</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Real-time database with Firestore and cloud storage
+              Multiple storage adapters: PostgreSQL, SQLite, or JSON file storage
             </p>
           </div>
 
@@ -45,10 +45,10 @@ export default function HomePage() {
 
         <div className="text-center space-x-4">
           <Link
-            href="/admin"
+            href="/admin/pages"
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Go to Admin Panel
+            Go to Pages
             <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
           <Link
@@ -65,11 +65,12 @@ export default function HomePage() {
           <ul className="space-y-2 text-gray-600 dark:text-gray-400">
             <li>✓ Pages with customizable sections</li>
             <li>✓ Multiple block types: text, images, headings, lists, quotes</li>
-            <li>✓ Image upload with Firebase Storage</li>
+            <li>✓ Drag & drop page and block reordering</li>
+            <li>✓ Image optimization with Next.js Image</li>
             <li>✓ RESTful API for headless CMS usage</li>
             <li>✓ Modern UI with Tailwind CSS and shadcn/ui</li>
             <li>✓ TypeScript for type safety</li>
-            <li>✓ Real-time updates with Firestore</li>
+            <li>✓ Pluggable storage: PostgreSQL, SQLite, or JSON</li>
           </ul>
         </div>
       </div>

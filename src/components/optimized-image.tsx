@@ -9,7 +9,7 @@ interface OptimizedImageProps {
 
 /**
  * OptimizedImage component that uses Next.js Image for automatic optimization
- * and responsive images with multiple sizes from Firebase Storage
+ * and responsive images with multiple sizes from local storage
  */
 export function OptimizedImage({
   block,

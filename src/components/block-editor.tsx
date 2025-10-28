@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Save, Upload, Loader2, ChevronUp, ChevronDown } from "lucide-react";
+import { Trash2, Upload, Loader2, ChevronUp, ChevronDown, Link as LinkIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,14 +35,15 @@ export function BlockEditor({
   isFirst = false,
   isLast = false,
 }: BlockEditorProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>(block);
   const [uploading, setUploading] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState<string>("");
+  const [useImageUrl, setUseImageUrl] = useState(false);
 
-  const handleSave = () => {
-    onUpdate(editData);
-    setIsEditing(false);
+  // Auto-save on change for text-based blocks
+  const handleAutoSave = (data: any) => {
+    setEditData(data);
+    onUpdate(data);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,13 +97,15 @@ export function BlockEditor({
       const responseData = await response.json();
       const data = unwrapAPIResponse<any>(responseData);
 
-      // Update edit data with all image information
-      setEditData({
+      // Update and save immediately
+      const newData = {
         ...editData,
-        url: data.url, // Main URL (original)
-        urls: data.urls, // All sizes
+        url: data.url,
+        urls: data.urls,
         dimensions: data.dimensions,
-      });
+      };
+      setEditData(newData);
+      onUpdate(newData);
 
       setCompressionInfo(
         `✓ Uploaded successfully! Multiple sizes created.`
@@ -117,97 +122,53 @@ export function BlockEditor({
     }
   };
 
-  const renderPreview = () => {
-    switch (block.type) {
-      case "text":
-        return (
-          <div className="prose max-w-none">
-            <p>{block.content}</p>
-          </div>
-        );
-      case "heading":
-        const HeadingTag = `h${block.level}` as keyof React.JSX.IntrinsicElements;
-        return (
-          <div className="prose max-w-none">
-            <HeadingTag className="font-bold">{block.content}</HeadingTag>
-          </div>
-        );
-      case "image":
-        return (
-          <div>
-            {block.url ? (
-              <img
-                src={block.url}
-                alt={block.alt}
-                className="max-w-full h-auto rounded"
-              />
-            ) : (
-              <div className="bg-gray-100 h-48 flex items-center justify-center rounded">
-                <p className="text-gray-500">No image uploaded</p>
-              </div>
-            )}
-            {block.caption && (
-              <p className="text-sm text-gray-600 mt-2">{block.caption}</p>
-            )}
-          </div>
-        );
-      case "list":
-        return (
-          <div className="prose max-w-none">
-            {block.ordered ? (
-              <ol className="list-decimal list-inside">
-                {block.items.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ol>
-            ) : (
-              <ul className="list-disc list-inside">
-                {block.items.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        );
-      case "quote":
-        return (
-          <blockquote className="border-l-4 border-gray-300 pl-4 italic">
-            <p>{block.content}</p>
-            {block.author && (
-              <footer className="text-sm text-gray-600 mt-2">
-                — {block.author}
-              </footer>
-            )}
-          </blockquote>
-        );
-    }
+  const handleImageUrlSave = () => {
+    onUpdate(editData);
+    setUseImageUrl(false);
   };
 
-  const renderEditor = () => {
+  const renderContent = () => {
     switch (block.type) {
       case "text":
         return (
           <div className="space-y-2">
-            <Label>Content</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-gray-500">Text Block (Markdown supported)</Label>
+            </div>
             <Textarea
               value={editData.content || ""}
               onChange={(e) =>
-                setEditData({ ...editData, content: e.target.value })
+                handleAutoSave({ ...editData, content: e.target.value })
               }
-              rows={4}
+              rows={6}
+              placeholder="Enter your text here... Supports **bold**, *italic*, [links](url), etc."
+              className="font-mono text-sm"
             />
+            {editData.content && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {editData.content}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
         );
+
       case "heading":
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Content</Label>
+              <Label>Heading Text</Label>
               <Input
                 value={editData.content || ""}
                 onChange={(e) =>
-                  setEditData({ ...editData, content: e.target.value })
+                  handleAutoSave({ ...editData, content: e.target.value })
                 }
+                placeholder="Enter heading text..."
+                className="text-lg font-semibold"
               />
             </div>
             <div className="space-y-2">
@@ -215,7 +176,7 @@ export function BlockEditor({
               <select
                 value={editData.level || 2}
                 onChange={(e) =>
-                  setEditData({ ...editData, level: Number(e.target.value) })
+                  handleAutoSave({ ...editData, level: Number(e.target.value) })
                 }
                 className="w-full h-10 rounded-md border border-input bg-background px-3 py-2"
               >
@@ -226,25 +187,89 @@ export function BlockEditor({
                 ))}
               </select>
             </div>
+            {editData.content && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                {(() => {
+                  const HeadingTag = `h${editData.level || 2}` as keyof React.JSX.IntrinsicElements;
+                  const sizes = {
+                    1: "text-4xl",
+                    2: "text-3xl",
+                    3: "text-2xl",
+                    4: "text-xl",
+                    5: "text-lg",
+                    6: "text-base",
+                  };
+                  return (
+                    <HeadingTag className={`font-bold ${sizes[editData.level || 2]}`}>
+                      {editData.content}
+                    </HeadingTag>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         );
+
       case "image":
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Image</Label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                  className="flex-1"
-                />
-                {uploading && (
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                )}
+              <Label>Image Source</Label>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  variant={!useImageUrl ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseImageUrl(false)}
+                >
+                  Upload File
+                </Button>
+                <Button
+                  type="button"
+                  variant={useImageUrl ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseImageUrl(true)}
+                >
+                  <LinkIcon className="w-3 h-3 mr-1" />
+                  Use URL
+                </Button>
               </div>
+
+              {useImageUrl ? (
+                <div className="space-y-2">
+                  <Input
+                    type="url"
+                    value={editData.url || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, url: e.target.value })
+                    }
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleImageUrlSave}
+                  >
+                    Save URL
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="flex-1"
+                  />
+                  {uploading && (
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  )}
+                </div>
+              )}
+
               {compressionInfo && (
                 <p className="text-sm text-blue-600">{compressionInfo}</p>
               )}
@@ -274,7 +299,7 @@ export function BlockEditor({
               <Input
                 value={editData.alt || ""}
                 onChange={(e) =>
-                  setEditData({ ...editData, alt: e.target.value })
+                  handleAutoSave({ ...editData, alt: e.target.value })
                 }
                 placeholder="Describe the image for accessibility"
               />
@@ -284,13 +309,14 @@ export function BlockEditor({
               <Input
                 value={editData.caption || ""}
                 onChange={(e) =>
-                  setEditData({ ...editData, caption: e.target.value })
+                  handleAutoSave({ ...editData, caption: e.target.value })
                 }
                 placeholder="Optional caption text"
               />
             </div>
           </div>
         );
+
       case "list":
         return (
           <div className="space-y-4">
@@ -299,14 +325,14 @@ export function BlockEditor({
                 type="checkbox"
                 checked={editData.ordered || false}
                 onChange={(e) =>
-                  setEditData({ ...editData, ordered: e.target.checked })
+                  handleAutoSave({ ...editData, ordered: e.target.checked })
                 }
                 className="w-4 h-4"
               />
-              <Label>Ordered List</Label>
+              <Label>Ordered List (1, 2, 3...)</Label>
             </div>
             <div className="space-y-2">
-              <Label>Items</Label>
+              <Label>List Items</Label>
               {(editData.items || []).map((item: string, index: number) => (
                 <div key={index} className="flex gap-2">
                   <Input
@@ -314,17 +340,19 @@ export function BlockEditor({
                     onChange={(e) => {
                       const newItems = [...editData.items];
                       newItems[index] = e.target.value;
-                      setEditData({ ...editData, items: newItems });
+                      handleAutoSave({ ...editData, items: newItems });
                     }}
+                    placeholder={`Item ${index + 1}`}
                   />
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       const newItems = editData.items.filter(
                         (_: any, i: number) => i !== index
                       );
-                      setEditData({ ...editData, items: newItems });
+                      handleAutoSave({ ...editData, items: newItems });
                     }}
                   >
                     Remove
@@ -332,31 +360,54 @@ export function BlockEditor({
                 </div>
               ))}
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  setEditData({
+                  handleAutoSave({
                     ...editData,
                     items: [...(editData.items || []), ""],
                   })
                 }
               >
-                Add Item
+                + Add Item
               </Button>
             </div>
+            {editData.items && editData.items.length > 0 && editData.items[0] !== "" && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                <div className="prose prose-sm max-w-none">
+                  {editData.ordered ? (
+                    <ol className="list-decimal list-inside">
+                      {editData.items.map((item: string, i: number) => (
+                        item && <li key={i}>{item}</li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <ul className="list-disc list-inside">
+                      {editData.items.map((item: string, i: number) => (
+                        item && <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         );
+
       case "quote":
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Quote</Label>
+              <Label>Quote Text</Label>
               <Textarea
                 value={editData.content || ""}
                 onChange={(e) =>
-                  setEditData({ ...editData, content: e.target.value })
+                  handleAutoSave({ ...editData, content: e.target.value })
                 }
                 rows={3}
+                placeholder="Enter quote text..."
               />
             </div>
             <div className="space-y-2">
@@ -364,80 +415,68 @@ export function BlockEditor({
               <Input
                 value={editData.author || ""}
                 onChange={(e) =>
-                  setEditData({ ...editData, author: e.target.value })
+                  handleAutoSave({ ...editData, author: e.target.value })
                 }
+                placeholder="Quote author name"
               />
             </div>
+            {editData.content && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-700">
+                  <p>{editData.content}</p>
+                  {editData.author && (
+                    <footer className="text-sm text-gray-600 mt-2">
+                      — {editData.author}
+                    </footer>
+                  )}
+                </blockquote>
+              </div>
+            )}
           </div>
         );
     }
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
+    <div className="border rounded-lg p-4 bg-white shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <div className="text-sm font-medium text-gray-600 uppercase">
+        <div className="text-sm font-medium text-gray-600 uppercase flex items-center gap-2">
           {block.type}
+          {(block.type === "text" || block.type === "heading" || block.type === "list" || block.type === "quote") && (
+            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Always Editable</span>
+          )}
         </div>
         <div className="flex gap-2">
-          {!isEditing && (
-            <>
-              {!isFirst && onMoveUp && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onMoveUp}
-                  title="Move up"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </Button>
-              )}
-              {!isLast && onMoveDown && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onMoveDown}
-                  title="Move down"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              )}
-            </>
+          {!isFirst && onMoveUp && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onMoveUp}
+              title="Move up"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </Button>
           )}
-          {isEditing ? (
-            <>
-              <Button variant="outline" size="sm" onClick={handleSave}>
-                <Save className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditData(block);
-                }}
-              >
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit
-              </Button>
-              <Button variant="outline" size="sm" onClick={onDelete}>
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </Button>
-            </>
+          {!isLast && onMoveDown && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onMoveDown}
+              title="Move down"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </Button>
           )}
+          <Button type="button" variant="outline" size="sm" onClick={onDelete}>
+            <Trash2 className="w-4 h-4 text-red-600" />
+          </Button>
         </div>
       </div>
 
-      {isEditing ? renderEditor() : renderPreview()}
+      {renderContent()}
     </div>
   );
 }

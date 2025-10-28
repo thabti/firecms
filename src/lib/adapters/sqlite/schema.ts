@@ -1,5 +1,5 @@
 /**
- * SQLite database schema for FireCMS
+ * SQLite database schema for ThabtiCMS
  */
 export const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS pages (
