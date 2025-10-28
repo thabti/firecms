@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   Save, ArrowLeft, Trash2, Plus, FileText, Eye,
   Settings2, Loader2, CheckCircle2, AlertCircle,
-  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, Code, RefreshCw
+  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, ChevronRight, Code, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { apiCall } from "@/lib/api-client";
@@ -39,6 +39,8 @@ export default function EditPagePage() {
     addBlock: addBlockToStore,
     deleteBlock: deleteBlockFromStore,
     moveBlockBetweenSections,
+    toggleSectionCollapse,
+    collapsedSections,
   } = usePageEditorStore();
 
   const [loading, setLoading] = useState(true);
@@ -738,6 +740,19 @@ export default function EditPagePage() {
                     <div className="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleSectionCollapse(section.id)}
+                            title={collapsedSections.has(section.id) ? "Expand section" : "Collapse section"}
+                            className="p-1 h-auto hover:bg-gray-200 flex-shrink-0"
+                          >
+                            {collapsedSections.has(section.id) ? (
+                              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                            )}
+                          </Button>
                           <GripVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <EditableSectionTitle
@@ -798,6 +813,7 @@ export default function EditPagePage() {
                     </div>
 
                     {/* Section Content */}
+                    {!collapsedSections.has(section.id) && (
                     <div className="p-6">
                       {section.blocks.length === 0 ? (
                         <SectionDropZone
@@ -958,6 +974,7 @@ export default function EditPagePage() {
                         </>
                       )}
                     </div>
+                    )}
                   </div>
                   </DraggableSection>
                 ))}
