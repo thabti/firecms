@@ -4,7 +4,7 @@ FireCMS supports multiple storage backends through an adapter pattern. You can c
 
 ## Configuration
 
-Set your storage type in `.env.local`:
+Set your storage type in `.env`:
 
 ```bash
 # Choose one: "postgres", "firebase", "sqlite", or "json"
@@ -44,7 +44,7 @@ DATA_DIR=./data
 1. Create account at [neon.tech](https://neon.tech)
 2. Create a new project
 3. Copy connection string from dashboard
-4. Add to `.env.local`:
+4. Add to `.env`:
 
 ```bash
 STORAGE_TYPE=postgres
@@ -137,7 +137,7 @@ For database branching (dev/staging):
 1. Create a Firebase project at https://console.firebase.google.com
 2. Enable Firestore Database
 3. Copy your Firebase configuration
-4. Add to `.env.local`:
+4. Add to `.env`:
 
 ```bash
 STORAGE_TYPE=firebase
@@ -177,7 +177,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
 **Setup:**
 
-1. Set in `.env.local`:
+1. Set in `.env`:
 
 ```bash
 STORAGE_TYPE=json
@@ -242,7 +242,7 @@ git commit -m "Update about page content"
 pnpm install
 ```
 
-2. Set in `.env.local`:
+2. Set in `.env`:
 
 ```bash
 STORAGE_TYPE=sqlite
@@ -431,7 +431,7 @@ Use **SQLite** for:
 Error: PostgreSQL connection string required
 ```
 
-**Solution:** Ensure `DATABASE_URL` or `POSTGRES_URL` is set in `.env.local`:
+**Solution:** Ensure `DATABASE_URL` or `POSTGRES_URL` is set in `.env`:
 ```bash
 DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
 ```
@@ -461,7 +461,7 @@ Error: Too many connections
 Error: Firebase not initialized
 ```
 
-**Solution:** Check that all Firebase environment variables are set correctly in `.env.local`
+**Solution:** Check that all Firebase environment variables are set correctly in `.env`
 
 ### JSON File Permissions
 

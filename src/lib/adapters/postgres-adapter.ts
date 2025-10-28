@@ -20,9 +20,6 @@ import {
   updateSectionTimestamp,
 } from "./postgres/serializers";
 
-// Enable WebSocket for better performance in serverless environments
-neonConfig.fetchConnectionCache = true;
-
 export class PostgresAdapter implements StorageAdapter {
   private pool: Pool;
   private connectionString: string;
@@ -150,10 +147,10 @@ export class PostgresAdapter implements StorageAdapter {
     const client = await this.pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO pages (slug, title, description, published, version)
-         VALUES ($1, $2, $3, $4, 1)
+        `INSERT INTO pages (slug, title, description, version)
+         VALUES ($1, $2, $3, 1)
          RETURNING *`,
-        [data.slug, data.title, data.description || null, data.published ?? false]
+        [data.slug, data.title, data.description || null]
       );
 
       const page = result.rows[0];
@@ -177,10 +174,6 @@ export class PostgresAdapter implements StorageAdapter {
       if (data.description !== undefined) {
         updates.push(`description = $${paramCount++}`);
         params.push(data.description);
-      }
-      if (data.published !== undefined) {
-        updates.push(`published = $${paramCount++}`);
-        params.push(data.published);
       }
 
       updates.push(`updated_at = NOW()`, `version = version + 1`);

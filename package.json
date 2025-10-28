@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "clean": "bash scripts/cleanup-dev-servers.sh"
+    "clean": "bash scripts/cleanup-dev-servers.sh",
+    "migrate": "tsx scripts/run-migrations.ts"
   },
   "keywords": [
     "cms",
@@ -60,6 +61,7 @@
     "eslint-config-next": "^16.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "3.4.18",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }

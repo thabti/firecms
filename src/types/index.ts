@@ -1,4 +1,4 @@
-export type BlockType = "text" | "image" | "heading" | "list" | "quote";
+export type BlockType = "text" | "image" | "heading" | "list" | "quote" | "action" | "video";
 
 export interface TextBlock {
   id: string;
@@ -50,7 +50,26 @@ export interface QuoteBlock {
   order: number;
 }
 
-export type Block = TextBlock | ImageBlock | HeadingBlock | ListBlock | QuoteBlock;
+export interface ActionBlock {
+  id: string;
+  type: "action";
+  actionType: "button" | "link";
+  label: string;
+  url: string;
+  style?: "primary" | "secondary" | "outline";
+  openInNewTab?: boolean;
+  order: number;
+}
+
+export interface VideoBlock {
+  id: string;
+  type: "video";
+  url: string; // YouTube URL
+  caption?: string;
+  order: number;
+}
+
+export type Block = TextBlock | ImageBlock | HeadingBlock | ListBlock | QuoteBlock | ActionBlock | VideoBlock;
 
 export interface Section {
   id: string;
@@ -67,7 +86,6 @@ export interface Page {
   title: string;
   description?: string;
   sections: Section[];
-  published: boolean;
   version: number; // Version number for optimistic locking
   createdAt: Date;
   updatedAt: Date;
@@ -97,13 +115,11 @@ export interface CreatePageInput {
   slug: string;
   title: string;
   description?: string;
-  published?: boolean;
 }
 
 export interface UpdatePageInput {
   title?: string;
   description?: string;
-  published?: boolean;
 }
 
 export interface CreateSectionInput {

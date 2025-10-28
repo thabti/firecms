@@ -10,7 +10,6 @@ export function serializePage(row: any, sections: Section[]): Page {
     title: row.title,
     description: row.description,
     sections,
-    published: row.published,
     version: row.version,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),

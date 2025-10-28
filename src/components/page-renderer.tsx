@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { OptimizedImage } from "@/components/optimized-image";
 import type { Block, Page } from "@/types";
 
@@ -8,7 +10,9 @@ function renderBlock(block: Block, index: number) {
     case "text":
       return (
         <div key={block.id} data-block-cms-id={block.id} data-block-type="text" className="prose max-w-none">
-          <p className="text-gray-700 leading-relaxed">{block.content}</p>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} className="text-gray-700 leading-relaxed">
+            {block.content}
+          </ReactMarkdown>
         </div>
       );
     case "heading":
@@ -73,6 +77,77 @@ function renderBlock(block: Block, index: number) {
             </footer>
           )}
         </blockquote>
+      );
+    case "action":
+      const styleClasses = {
+        primary: "bg-blue-600 text-white hover:bg-blue-700",
+        secondary: "bg-gray-600 text-white hover:bg-gray-700",
+        outline: "border-2 border-blue-600 text-blue-600 hover:bg-blue-50",
+      };
+      const actionClass = styleClasses[block.style || "primary"];
+
+      if (block.actionType === "button") {
+        return (
+          <div key={block.id} data-block-cms-id={block.id} data-block-type="action" className="my-6">
+            <a
+              href={block.url}
+              target={block.openInNewTab ? "_blank" : undefined}
+              rel={block.openInNewTab ? "noopener noreferrer" : undefined}
+              className={`inline-block px-8 py-3 rounded-lg font-semibold transition-colors ${actionClass}`}
+            >
+              {block.label}
+            </a>
+          </div>
+        );
+      } else {
+        return (
+          <div key={block.id} data-block-cms-id={block.id} data-block-type="action" className="my-6">
+            <a
+              href={block.url}
+              target={block.openInNewTab ? "_blank" : undefined}
+              rel={block.openInNewTab ? "noopener noreferrer" : undefined}
+              className="text-blue-600 hover:underline font-semibold text-lg"
+            >
+              {block.label} →
+            </a>
+          </div>
+        );
+      }
+    case "video":
+      // Extract YouTube video ID from URL
+      const getYouTubeId = (url: string) => {
+        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+        const match = url.match(regExp);
+        return match && match[7].length === 11 ? match[7] : null;
+      };
+      const videoId = getYouTubeId(block.url);
+
+      if (!videoId) {
+        return (
+          <div key={block.id} data-block-cms-id={block.id} data-block-type="video" className="my-8 p-4 bg-red-50 border border-red-200 rounded">
+            <p className="text-red-600">Invalid YouTube URL</p>
+          </div>
+        );
+      }
+
+      return (
+        <div key={block.id} data-block-cms-id={block.id} data-block-type="video" className="my-8">
+          <div className="aspect-video">
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title={block.caption || "YouTube video"}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="rounded-lg shadow-lg"
+            ></iframe>
+          </div>
+          {block.caption && (
+            <p className="text-sm text-gray-600 mt-3 text-center italic">{block.caption}</p>
+          )}
+        </div>
       );
   }
 }

@@ -59,7 +59,7 @@ export default function NewPagePage() {
       <div className="container mx-auto max-w-4xl py-8 px-4">
         <div className="mb-6">
           <Link
-            href="/admin"
+            href="/admin/pages"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function NewPagePage() {
                 {saving ? "Creating..." : "Create Page"}
               </button>
               <Link
-                href="/admin"
+                href="/admin/pages"
                 className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
               >
                 Cancel

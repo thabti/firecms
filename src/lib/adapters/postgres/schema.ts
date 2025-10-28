@@ -12,7 +12,6 @@ export const SCHEMA_SQL = `
     slug VARCHAR(255) UNIQUE NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
-    published BOOLEAN DEFAULT FALSE,
     version INTEGER DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -45,7 +44,6 @@ export const SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS idx_blocks_section_id ON blocks(section_id);
   CREATE INDEX IF NOT EXISTS idx_blocks_order ON blocks("order");
   CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug);
-  CREATE INDEX IF NOT EXISTS idx_pages_published ON pages(published);
   CREATE INDEX IF NOT EXISTS idx_pages_updated_at ON pages(updated_at DESC);
 
   -- GIN index for JSONB data in blocks for faster queries

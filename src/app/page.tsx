@@ -12,9 +12,6 @@ export default function HomePage() {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Modern Content Management System
           </p>
-          <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-            Built with Next.js 15, Tailwind CSS, and shadcn/ui
-          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 mb-16">
@@ -30,7 +27,8 @@ export default function HomePage() {
             <Database className="w-12 h-12 text-purple-600 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Flexible Storage</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Multiple storage adapters: PostgreSQL, SQLite, or JSON file storage
+              Multiple storage adapters: PostgreSQL, SQLite, or JSON file
+              storage
             </p>
           </div>
 
@@ -64,7 +62,9 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold mb-4">Features</h2>
           <ul className="space-y-2 text-gray-600 dark:text-gray-400">
             <li>✓ Pages with customizable sections</li>
-            <li>✓ Multiple block types: text, images, headings, lists, quotes</li>
+            <li>
+              ✓ Multiple block types: text, images, headings, lists, quotes
+            </li>
             <li>✓ Drag & drop page and block reordering</li>
             <li>✓ Image optimization with Next.js Image</li>
             <li>✓ RESTful API for headless CMS usage</li>

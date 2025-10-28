@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Loader2, FileText, Copy } from "lucide-react";
 import Link from "next/link";
 import type { Page } from "@/types";
 import { apiCall } from "@/lib/api-client";
@@ -10,7 +10,6 @@ export default function PagesPage() {
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
 
   useEffect(() => {
     fetchPages();
@@ -41,15 +40,56 @@ export default function PagesPage() {
     }
   };
 
+  const clonePage = async (page: Page) => {
+    try {
+      // Create a new page with the same content but a different slug
+      const newSlug = `${page.slug}-copy-${Date.now()}`;
+      const newPage = await apiCall<Page>("/api/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${page.title} (Copy)`,
+          slug: newSlug,
+          description: page.description,
+        }),
+      });
+
+      // Clone all sections and blocks
+      for (const section of page.sections) {
+        const newSection = await apiCall(`/api/pages/${newPage.id}/sections`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: section.title }),
+        });
+
+        // Clone all blocks in the section
+        for (const block of section.blocks) {
+          await apiCall(`/api/pages/${newPage.id}/sections/${newSection.id}/blocks`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: block.type,
+              content: block.content,
+              order: block.order,
+            }),
+          });
+        }
+      }
+
+      // Refresh the pages list
+      fetchPages();
+      alert("Page cloned successfully!");
+    } catch (error) {
+      console.error("Error cloning page:", error);
+      alert("Failed to clone page");
+    }
+  };
+
   const filteredPages = pages.filter((page) => {
-    const matchesSearch =
+    return (
       page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      page.slug.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter =
-      filter === "all" ||
-      (filter === "published" && page.published) ||
-      (filter === "draft" && !page.published);
-    return matchesSearch && matchesFilter;
+      page.slug.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   if (loading) {
@@ -82,155 +122,128 @@ export default function PagesPage() {
         </Link>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       {pages.length > 0 && (
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-6">
           <input
             type="text"
-            placeholder="Search pages..."
+            placeholder="Search pages by title or slug..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === "all"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("published")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === "published"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              Published
-            </button>
-            <button
-              onClick={() => setFilter("draft")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === "draft"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              Draft
-            </button>
-          </div>
         </div>
       )}
 
       {/* Empty State */}
       {pages.length === 0 ? (
-        <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-16 text-center">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No pages yet</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Get started by creating your first page. You can add sections, blocks, and
-            templates to build rich content.
-          </p>
-          <Link
-            href="/admin/pages/new"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Create your first page
-          </Link>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="px-6 py-12 text-center">
+            <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Start Creating Content</h3>
+            <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+              Create your first page to start building your website. Pages can contain multiple sections with text, images, videos, and more.
+            </p>
+            <Link
+              href="/admin/pages/new"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Create First Page
+            </Link>
+          </div>
         </div>
       ) : filteredPages.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-500">No pages found</p>
+          <p className="text-gray-500">No pages match your search</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPages.map((page) => (
-            <div
-              key={page.id}
-              className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
-            >
-              {/* Card Header */}
-              <div className="p-5 border-b border-gray-100">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/admin/pages/${page.id}`} className="hover:no-underline">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Page
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Slug
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sections
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Updated
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredPages.map((page) => (
+                <tr key={page.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <Link href={`/admin/pages/${page.id}`} className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
                         {page.title}
-                      </h3>
-                    </Link>
-                    <p className="text-sm text-gray-500 mt-1">/{page.slug}</p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                      page.published
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {page.published ? (
-                      <>
-                        <Eye className="w-3 h-3" />
-                        Live
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-3 h-3" />
-                        Draft
-                      </>
-                    )}
-                  </span>
-                </div>
-
-                {page.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mt-2">
-                    {page.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Card Footer */}
-              <div className="p-5 bg-gray-50 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 flex items-center gap-1.5">
-                    <FileText className="w-4 h-4" />
-                    {page.sections.length}{" "}
-                    {page.sections.length === 1 ? "section" : "sections"}
-                  </span>
-                </div>
-
-                <div className="flex gap-2">
-                  <Link
-                    href={`/admin/pages/${page.id}`}
-                    className="flex-1 text-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                  >
-                    <Edit className="w-4 h-4 inline mr-1.5" />
-                    Edit
-                  </Link>
-                  {page.published && (
-                    <Link
-                      href={`/${page.slug}`}
-                      target="_blank"
-                      className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => deletePage(page.id)}
-                    className="px-4 py-2 bg-white border border-red-200 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+                      </Link>
+                      {page.description && (
+                        <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{page.description}</p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <code className="text-sm text-gray-600 bg-gray-100 px-2 py-0.5 rounded">/{page.slug}</code>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-600">
+                      {page.sections.length} {page.sections.length === 1 ? "section" : "sections"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-600">
+                      {new Date(page.updatedAt).toLocaleDateString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end gap-3">
+                      <Link
+                        href={`/admin/pages/${page.id}`}
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="Edit page"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => clonePage(page)}
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="Clone page"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <Link
+                        href={`/${page.slug}`}
+                        target="_blank"
+                        className="text-gray-600 hover:text-gray-700 transition-colors"
+                        title="View page"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => deletePage(page.id)}
+                        className="text-red-600 hover:text-red-700 transition-colors"
+                        title="Delete page"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

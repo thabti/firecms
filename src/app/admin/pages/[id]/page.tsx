@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   Save, ArrowLeft, Trash2, Plus, FileText, Eye,
   Settings2, Loader2, CheckCircle2, AlertCircle,
-  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown
+  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, Code
 } from "lucide-react";
 import Link from "next/link";
 import { apiCall } from "@/lib/api-client";
@@ -13,6 +13,7 @@ import { BlockEditor } from "@/components/block-editor";
 import { TemplateSelector } from "@/components/template-selector";
 import { DraggableSection } from "@/components/draggable-section";
 import { DraggableBlock } from "@/components/draggable-block";
+import { EditableSectionTitle } from "@/components/editable-section-title";
 import { Button } from "@/components/ui/button";
 import type { Page, Section, Block } from "@/types";
 import type { Template } from "@/types/templates";
@@ -30,7 +31,6 @@ export default function EditPagePage() {
     title: "",
     slug: "",
     description: "",
-    published: false,
   });
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -48,7 +48,6 @@ export default function EditPagePage() {
         title: data.title,
         slug: data.slug,
         description: data.description || "",
-        published: data.published,
       });
     } catch (error) {
       console.error("Error fetching page:", error);
@@ -99,7 +98,7 @@ export default function EditPagePage() {
         method: "DELETE",
       });
 
-      router.push("/admin");
+      router.push("/admin/pages");
     } catch (error) {
       console.error("Error deleting page:", error);
       showNotification("Failed to delete page", "error");
@@ -148,6 +147,30 @@ export default function EditPagePage() {
     } catch (error) {
       console.error("Error deleting section:", error);
       showNotification("Failed to delete section", "error");
+      // Revert on error
+      fetchPage();
+    }
+  };
+
+  const updateSectionTitle = async (sectionId: string, newTitle: string) => {
+    // Optimistic update: Update section title in local state immediately
+    setPage(prev => prev ? {
+      ...prev,
+      sections: prev.sections.map(s =>
+        s.id === sectionId ? { ...s, title: newTitle } : s
+      )
+    } : null);
+
+    try {
+      await apiCall(`/api/pages/${pageId}/sections/${sectionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle }),
+      });
+      showNotification("Section title updated", "success");
+    } catch (error) {
+      console.error("Error updating section title:", error);
+      showNotification("Failed to update section title", "error");
       // Revert on error
       fetchPage();
     }
@@ -288,6 +311,17 @@ export default function EditPagePage() {
         break;
       case "quote":
         blockData.content = "Enter quote here...";
+        break;
+      case "action":
+        blockData.actionType = "button";
+        blockData.label = "Click me";
+        blockData.url = "";
+        blockData.style = "primary";
+        blockData.openInNewTab = false;
+        break;
+      case "video":
+        blockData.url = "";
+        blockData.caption = "";
         break;
     }
 
@@ -484,7 +518,7 @@ export default function EditPagePage() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Page not found</h1>
           <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
-          <Link href="/admin">
+          <Link href="/admin/pages">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Pages
@@ -503,7 +537,7 @@ export default function EditPagePage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
-                href="/admin"
+                href="/admin/pages"
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -544,6 +578,13 @@ export default function EditPagePage() {
                 <Button variant="outline" size="sm">
                   <Eye className="w-4 h-4 mr-2" />
                   Preview
+                </Button>
+              </Link>
+
+              <Link href={`/api/pages/${pageId}`} target="_blank">
+                <Button variant="outline" size="sm">
+                  <Code className="w-4 h-4 mr-2" />
+                  API
                 </Button>
               </Link>
 
@@ -651,22 +692,6 @@ export default function EditPagePage() {
                   />
                 </div>
 
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <input
-                    type="checkbox"
-                    id="published"
-                    checked={formData.published}
-                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="published" className="text-sm font-medium text-gray-900">
-                    Published
-                  </label>
-                  <span className="text-sm text-gray-500 ml-auto">
-                    {formData.published ? "Page is live" : "Page is draft"}
-                  </span>
-                </div>
-
                 <div className="flex gap-3 pt-4 border-t border-gray-200">
                   <button
                     type="submit"
@@ -688,6 +713,25 @@ export default function EditPagePage() {
                 </div>
               </form>
             </div>
+
+            {/* Floating Save Button */}
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="fixed bottom-8 right-8 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:shadow-xl hover:scale-105"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Save Changes
+                </>
+              )}
+            </button>
           </div>
         ) : (
           /* Page Content */
@@ -733,9 +777,11 @@ export default function EditPagePage() {
                         <div className="flex items-center gap-3">
                           <GripVertical className="w-5 h-5 text-gray-400" />
                           <div>
-                            <h3 className="text-base font-medium text-gray-700">
-                              Section {sectionIndex + 1}
-                            </h3>
+                            <EditableSectionTitle
+                              title={section.title}
+                              sectionIndex={sectionIndex}
+                              onSave={(newTitle) => updateSectionTitle(section.id, newTitle)}
+                            />
                             <p className="text-sm text-gray-500 mt-0.5">
                               {section.blocks.length} {section.blocks.length === 1 ? "block" : "blocks"}
                             </p>
@@ -824,6 +870,20 @@ export default function EditPagePage() {
                             >
                               + Quote
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addBlock(section.id, "action")}
+                            >
+                              + Action
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addBlock(section.id, "video")}
+                            >
+                              + Video
+                            </Button>
                           </div>
                         </div>
                       ) : (
@@ -893,6 +953,22 @@ export default function EditPagePage() {
                                 className="hover:bg-blue-50 hover:border-blue-300"
                               >
                                 + Quote
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "action")}
+                                className="hover:bg-blue-50 hover:border-blue-300"
+                              >
+                                + Action
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "video")}
+                                className="hover:bg-blue-50 hover:border-blue-300"
+                              >
+                                + Video
                               </Button>
                             </div>
                           </div>

@@ -10,17 +10,15 @@ export const revalidate = 60;
 // Enable dynamic params
 export const dynamicParams = true;
 
-// Generate static params for published pages
+// Generate static params for all pages
 export async function generateStaticParams() {
   try {
     const adapter = await getStorageAdapter();
     const pages = await adapter.getPages();
 
-    return pages
-      .filter((page) => page.published)
-      .map((page) => ({
-        slug: page.slug,
-      }));
+    return pages.map((page) => ({
+      slug: page.slug,
+    }));
   } catch (error) {
     console.error("Error generating static params:", error);
     return [];
@@ -39,7 +37,7 @@ export async function generateMetadata({
     const adapter = await getStorageAdapter();
     const page = await adapter.getPageBySlug(slug);
 
-    if (!page || !page.published) {
+    if (!page) {
       return {
         title: "Page Not Found",
       };
@@ -76,7 +74,7 @@ async function PageContent({ slug }: { slug: string }) {
   const adapter = await getStorageAdapter();
   const page = await adapter.getPageBySlug(slug);
 
-  if (!page || !page.published) {
+  if (!page) {
     notFound();
   }
 

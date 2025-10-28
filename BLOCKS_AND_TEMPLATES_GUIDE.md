@@ -190,7 +190,7 @@ Example custom template:
 ### API Errors
 If you see "API call failed" errors:
 1. Check that the dev server is running: `pnpm dev`
-2. Verify your `.env.local` file has correct settings
+2. Verify your `.env` file has correct settings
 3. Check the browser console for detailed error messages
 
 ### Missing Blocks

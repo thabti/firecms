@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { DraggableListItem } from "@/components/draggable-list-item";
 import type { Block } from "@/types";
 import {
   compressImage,
@@ -332,32 +333,30 @@ export function BlockEditor({
               <Label>Ordered List (1, 2, 3...)</Label>
             </div>
             <div className="space-y-2">
-              <Label>List Items</Label>
+              <Label>List Items (Drag to reorder)</Label>
               {(editData.items || []).map((item: string, index: number) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={item}
-                    onChange={(e) => {
-                      const newItems = [...editData.items];
-                      newItems[index] = e.target.value;
-                      handleAutoSave({ ...editData, items: newItems });
-                    }}
-                    placeholder={`Item ${index + 1}`}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const newItems = editData.items.filter(
-                        (_: any, i: number) => i !== index
-                      );
-                      handleAutoSave({ ...editData, items: newItems });
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </div>
+                <DraggableListItem
+                  key={index}
+                  item={item}
+                  index={index}
+                  onUpdate={(idx, value) => {
+                    const newItems = [...editData.items];
+                    newItems[idx] = value;
+                    handleAutoSave({ ...editData, items: newItems });
+                  }}
+                  onRemove={(idx) => {
+                    const newItems = editData.items.filter(
+                      (_: any, i: number) => i !== idx
+                    );
+                    handleAutoSave({ ...editData, items: newItems });
+                  }}
+                  onReorder={(sourceIndex, destinationIndex) => {
+                    const newItems = [...editData.items];
+                    const [movedItem] = newItems.splice(sourceIndex, 1);
+                    newItems.splice(destinationIndex, 0, movedItem);
+                    handleAutoSave({ ...editData, items: newItems });
+                  }}
+                />
               ))}
               <Button
                 type="button"
@@ -369,6 +368,7 @@ export function BlockEditor({
                     items: [...(editData.items || []), ""],
                   })
                 }
+                className="w-full"
               >
                 + Add Item
               </Button>
@@ -435,6 +435,166 @@ export function BlockEditor({
             )}
           </div>
         );
+
+      case "action":
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Action Type</Label>
+              <select
+                value={editData.actionType || "button"}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, actionType: e.target.value })
+                }
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2"
+              >
+                <option value="button">Button</option>
+                <option value="link">Link</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Button/Link Label</Label>
+              <Input
+                value={editData.label || ""}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, label: e.target.value })
+                }
+                placeholder="Click me"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>URL</Label>
+              <Input
+                type="url"
+                value={editData.url || ""}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, url: e.target.value })
+                }
+                placeholder="https://example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Style</Label>
+              <select
+                value={editData.style || "primary"}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, style: e.target.value })
+                }
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2"
+              >
+                <option value="primary">Primary</option>
+                <option value="secondary">Secondary</option>
+                <option value="outline">Outline</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={editData.openInNewTab || false}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, openInNewTab: e.target.checked })
+                }
+                className="w-4 h-4"
+              />
+              <Label>Open in new tab</Label>
+            </div>
+            {editData.label && editData.url && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                {editData.actionType === "button" ? (
+                  <button
+                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                      editData.style === "primary"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : editData.style === "secondary"
+                        ? "bg-gray-600 text-white hover:bg-gray-700"
+                        : "border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+                    }`}
+                  >
+                    {editData.label}
+                  </button>
+                ) : (
+                  <a
+                    href={editData.url}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    {editData.label}
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        );
+
+      case "video":
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>YouTube URL</Label>
+              <Input
+                type="url"
+                value={editData.url || ""}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, url: e.target.value })
+                }
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <p className="text-xs text-gray-500">
+                Paste a YouTube video URL. It will be automatically embedded.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Caption (optional)</Label>
+              <Input
+                value={editData.caption || ""}
+                onChange={(e) =>
+                  handleAutoSave({ ...editData, caption: e.target.value })
+                }
+                placeholder="Video description"
+              />
+            </div>
+            {editData.url && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                {(() => {
+                  // Extract YouTube video ID from URL
+                  const getYouTubeId = (url: string) => {
+                    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+                    const match = url.match(regExp);
+                    return match && match[7].length === 11 ? match[7] : null;
+                  };
+                  const videoId = getYouTubeId(editData.url);
+
+                  if (videoId) {
+                    return (
+                      <div className="aspect-video">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          title="YouTube video preview"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="rounded"
+                        ></iframe>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <p className="text-sm text-red-600">
+                        Invalid YouTube URL. Please enter a valid YouTube video URL.
+                      </p>
+                    );
+                  }
+                })()}
+                {editData.caption && (
+                  <p className="text-sm text-gray-600 mt-2">{editData.caption}</p>
+                )}
+              </div>
+            )}
+          </div>
+        );
     }
   };
 
@@ -443,7 +603,7 @@ export function BlockEditor({
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm font-medium text-gray-600 uppercase flex items-center gap-2">
           {block.type}
-          {(block.type === "text" || block.type === "heading" || block.type === "list" || block.type === "quote") && (
+          {(block.type === "text" || block.type === "heading" || block.type === "list" || block.type === "quote" || block.type === "action" || block.type === "video") && (
             <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Always Editable</span>
           )}
         </div>

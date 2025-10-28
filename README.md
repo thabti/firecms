@@ -10,9 +10,9 @@ git clone https://github.com/sabeurthabti/firecms.git
 cd firecms
 pnpm install
 
-# Configure storage (uncomment SQLite in .env.local)
-cp .env.local.example .env.local
-# Edit .env.local and uncomment the SQLite section
+# Configure storage (uncomment SQLite in .env)
+cp .env.example .env
+# Edit .env and uncomment the SQLite section
 
 # Run
 pnpm dev
@@ -23,7 +23,7 @@ Open [http://localhost:3000/admin](http://localhost:3000/admin) to start creatin
 **Or use this one-liner for SQLite:**
 
 ```bash
-git clone https://github.com/sabeurthabti/firecms.git && cd firecms && pnpm install && echo -e "STORAGE_TYPE=sqlite\nDATA_DIR=./data" > .env.local && pnpm dev
+git clone https://github.com/sabeurthabti/firecms.git && cd firecms && pnpm install && echo -e "STORAGE_TYPE=sqlite\nDATA_DIR=./data" > .env && pnpm dev
 ```
 
 ## Features
@@ -121,10 +121,10 @@ pnpm install
 FireCMS supports four storage options. Copy the example file and choose one:
 
 ```bash
-cp .env.local.example .env.local
+cp .env.example .env
 ```
 
-Then uncomment one of the storage options in `.env.local`:
+Then uncomment one of the storage options in `.env`:
 
 ### Option A: PostgreSQL/Neon (Recommended for Production)
 
@@ -132,7 +132,7 @@ Perfect for scalable, serverless production deployments.
 
 1. Create a free account at [neon.tech](https://neon.tech)
 2. Create a new project and copy the connection string
-3. Uncomment these lines in `.env.local`:
+3. Uncomment these lines in `.env`:
 
 ```env
 STORAGE_TYPE=postgres
@@ -148,7 +148,7 @@ DATABASE_URL=postgresql://username:password@host/database?sslmode=require
 
 ### Option B: SQLite (Recommended for Development)
 
-Uncomment these lines in `.env.local`:
+Uncomment these lines in `.env`:
 
 ```env
 STORAGE_TYPE=sqlite
@@ -159,7 +159,7 @@ That's it! SQLite requires no additional setup. The database will be created aut
 
 ### Option C: JSON File Storage (Simplest Setup)
 
-Uncomment these lines in `.env.local`:
+Uncomment these lines in `.env`:
 
 ```env
 STORAGE_TYPE=json
@@ -353,7 +353,7 @@ Perfect for:
 You can migrate between storage types:
 
 1. Export your data from the current backend
-2. Change `STORAGE_TYPE` in `.env.local`
+2. Change `STORAGE_TYPE` in `.env`
 3. Import data to the new backend
 
 For detailed migration instructions, see [STORAGE.md](./STORAGE.md).
