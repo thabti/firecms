@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   Save, ArrowLeft, Trash2, Plus, FileText, Eye,
   Settings2, Loader2, CheckCircle2, AlertCircle,
-  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, Code
+  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, ChevronRight, Code
 } from "lucide-react";
 import Link from "next/link";
 import { apiCall } from "@/lib/api-client";
@@ -37,6 +37,8 @@ export default function EditPagePage() {
     updateBlock: updateBlockInStore,
     addBlock: addBlockToStore,
     deleteBlock: deleteBlockFromStore,
+    toggleSectionCollapse,
+    collapsedSections,
   } = usePageEditorStore();
 
   const [loading, setLoading] = useState(true);
@@ -661,6 +663,19 @@ export default function EditPagePage() {
                     <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleSectionCollapse(section.id)}
+                            title={collapsedSections.has(section.id) ? "Expand section" : "Collapse section"}
+                            className="p-1 h-auto hover:bg-gray-200"
+                          >
+                            {collapsedSections.has(section.id) ? (
+                              <ChevronRight className="w-5 h-5 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-600" />
+                            )}
+                          </Button>
                           <GripVertical className="w-5 h-5 text-gray-400" />
                           <div>
                             <EditableSectionTitle
@@ -716,6 +731,7 @@ export default function EditPagePage() {
                     </div>
 
                     {/* Section Content */}
+                    {!collapsedSections.has(section.id) && (
                     <div className="p-6">
                       {section.blocks.length === 0 ? (
                         <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
@@ -861,6 +877,7 @@ export default function EditPagePage() {
                         </>
                       )}
                     </div>
+                    )}
                   </div>
                   </DraggableSection>
                 ))}

@@ -5,6 +5,7 @@ interface PageEditorState {
   page: Page | null;
   originalPage: Page | null;
   hasUnsavedChanges: boolean;
+  collapsedSections: Set<string>;
 
   // Actions
   setPage: (page: Page) => void;
@@ -16,6 +17,7 @@ interface PageEditorState {
   updateBlock: (sectionId: string, blockId: string, data: any) => void;
   addBlock: (sectionId: string, block: any) => void;
   deleteBlock: (sectionId: string, blockId: string) => void;
+  toggleSectionCollapse: (sectionId: string) => void;
   markAsSaved: () => void;
   reset: () => void;
 }
@@ -24,6 +26,7 @@ export const usePageEditorStore = create<PageEditorState>((set) => ({
   page: null,
   originalPage: null,
   hasUnsavedChanges: false,
+  collapsedSections: new Set<string>(),
 
   setPage: (page) => set({
     page,
@@ -136,6 +139,16 @@ export const usePageEditorStore = create<PageEditorState>((set) => ({
     };
   }),
 
+  toggleSectionCollapse: (sectionId) => set((state) => {
+    const newCollapsedSections = new Set(state.collapsedSections);
+    if (newCollapsedSections.has(sectionId)) {
+      newCollapsedSections.delete(sectionId);
+    } else {
+      newCollapsedSections.add(sectionId);
+    }
+    return { collapsedSections: newCollapsedSections };
+  }),
+
   markAsSaved: () => set((state) => ({
     originalPage: state.page ? JSON.parse(JSON.stringify(state.page)) : null,
     hasUnsavedChanges: false
@@ -144,6 +157,7 @@ export const usePageEditorStore = create<PageEditorState>((set) => ({
   reset: () => set({
     page: null,
     originalPage: null,
-    hasUnsavedChanges: false
+    hasUnsavedChanges: false,
+    collapsedSections: new Set<string>()
   }),
 }));
