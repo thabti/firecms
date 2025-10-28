@@ -600,15 +600,15 @@ export function BlockEditor({
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm font-medium text-gray-600 uppercase flex items-center gap-2">
+    <div className="border rounded-lg p-3 sm:p-4 bg-white shadow-sm">
+      <div className="flex items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
+        <div className="text-xs sm:text-sm font-medium text-gray-600 uppercase flex items-center gap-2 flex-wrap">
           {block.type}
           {(block.type === "text" || block.type === "heading" || block.type === "list" || block.type === "quote" || block.type === "action" || block.type === "video") && (
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Always Editable</span>
+            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded whitespace-nowrap">Always Editable</span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
           {!isFirst && onMoveUp && (
             <Button
               type="button"
@@ -616,6 +616,7 @@ export function BlockEditor({
               size="sm"
               onClick={onMoveUp}
               title="Move up"
+              className="hidden sm:inline-flex"
             >
               <ChevronUp className="w-4 h-4" />
             </Button>
@@ -627,11 +628,12 @@ export function BlockEditor({
               size="sm"
               onClick={onMoveDown}
               title="Move down"
+              className="hidden sm:inline-flex"
             >
               <ChevronDown className="w-4 h-4" />
             </Button>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={onDelete}>
+          <Button type="button" variant="outline" size="sm" onClick={onDelete} title="Delete block">
             <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
         </div>
