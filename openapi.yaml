@@ -45,6 +45,7 @@ components:
         - slug
         - title
         - sections
+        - live
         - version
         - createdAt
         - updatedAt
@@ -65,6 +66,10 @@ components:
           type: string
           nullable: true
           description: Optional page description
+        live:
+          type: boolean
+          description: Whether the page is published and publicly visible
+          default: false
         sections:
           type: array
           items:
@@ -307,6 +312,9 @@ components:
           type: string
         description:
           type: string
+        live:
+          type: boolean
+          description: Whether the page is published and publicly visible
 
     CreateSectionInput:
       type: object
@@ -651,6 +659,31 @@ paths:
       tags:
         - Pages
       summary: Update a page
+      description: Update page metadata including title, description, and live status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePageInput'
+      responses:
+        '200':
+          description: Page updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Page'
+
+    patch:
+      tags:
+        - Pages
+      summary: Partially update a page
+      description: Same as PUT - update page metadata including title, description, and live status
       requestBody:
         required: true
         content:
@@ -723,6 +756,60 @@ paths:
                       data:
                         $ref: '#/components/schemas/Section'
 
+  /api/pages/{id}/sections/reorder:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+
+    post:
+      tags:
+        - Sections
+      summary: Reorder sections
+      description: Update the order of all sections in a page by providing an ordered array of section IDs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sectionIds
+              properties:
+                sectionIds:
+                  type: array
+                  items:
+                    type: string
+                  description: Ordered array of section IDs. The position in the array determines the new order.
+                  example: ["section-3", "section-1", "section-2"]
+      responses:
+        '200':
+          description: Sections reordered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Page'
+        '400':
+          description: Invalid input (sectionIds must be an array)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Page not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/pages/{id}/sections/{sectionId}:
     parameters:
       - name: id
@@ -742,6 +829,25 @@ paths:
       tags:
         - Sections
       summary: Update a section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSectionInput'
+      responses:
+        '200':
+          description: Section updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+
+    patch:
+      tags:
+        - Sections
+      summary: Partially update a section
+      description: Same as PUT - update section title and/or order
       requestBody:
         required: true
         content:
