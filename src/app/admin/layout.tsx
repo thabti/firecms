@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FileText, Image as ImageIcon } from "lucide-react";
+import { MobileNav } from "@/components/mobile-nav";
 
 const navigation = [
   { name: "Pages", href: "/admin/pages", icon: FileText },
@@ -18,15 +19,15 @@ export default function AdminLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/admin/pages" className="flex items-center gap-3 hover:no-underline">
+            <Link href="/admin/pages" className="flex items-center gap-2 sm:gap-3 hover:no-underline">
               <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">T</span>
               </div>
-              <span className="text-lg font-semibold text-white">ThabtiCMS</span>
+              <span className="text-base sm:text-lg font-semibold text-white">ThabtiCMS</span>
             </Link>
 
-            {/* Navigation Links */}
-            <div className="flex items-center gap-2">
+            {/* Desktop Navigation Links - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -44,6 +45,9 @@ export default function AdminLayout({
                 View Site →
               </Link>
             </div>
+
+            {/* Mobile Navigation */}
+            <MobileNav />
           </div>
         </div>
       </nav>

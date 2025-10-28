@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ThabtiCMS - Modern Content Management System",
   description: "A powerful and beautiful CMS built with Next.js",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default function RootLayout({

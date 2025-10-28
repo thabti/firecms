@@ -373,27 +373,27 @@ export default function EditPagePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+      <div className="bg-white border-b border-gray-200 sticky top-16 md:top-0 shadow-sm" style={{ zIndex: "var(--z-editor-sticky)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex h-14 md:h-16 items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <Link
                 href="/admin/pages"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="inline-flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="font-medium">Back</span>
+                <span className="font-medium hidden sm:inline">Back</span>
               </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-lg font-semibold text-gray-900 truncate max-w-md">
+              <div className="h-6 w-px bg-gray-300 hidden sm:block"></div>
+              <h1 className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
                 {page.title || "Untitled Page"}
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Save Status Indicator */}
+            <div className="flex items-center gap-2">
+              {/* Save Status Indicator - Hidden on mobile */}
               {saveStatus && (
-                <div className="flex items-center gap-2 text-sm">
+                <div className="hidden md:flex items-center gap-2 text-sm">
                   {saveStatus === "saving" && (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
@@ -415,14 +415,30 @@ export default function EditPagePage() {
                 </div>
               )}
 
-              <Link href={`/preview/${pageId}`} target="_blank">
+              {/* Mobile Status Icon Only */}
+              {saveStatus && (
+                <div className="flex md:hidden">
+                  {saveStatus === "saving" && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
+                  {saveStatus === "saved" && <CheckCircle2 className="w-4 h-4 text-green-600" />}
+                  {saveStatus === "error" && <AlertCircle className="w-4 h-4 text-red-600" />}
+                </div>
+              )}
+
+              <Link href={`/preview/${pageId}`} target="_blank" className="hidden sm:inline-block">
                 <Button variant="outline" size="sm">
                   <Eye className="w-4 h-4 mr-2" />
-                  Preview
+                  <span className="hidden lg:inline">Preview</span>
                 </Button>
               </Link>
 
-              <Link href={`/api/pages/${pageId}`} target="_blank">
+              {/* Mobile Preview Icon */}
+              <Link href={`/preview/${pageId}`} target="_blank" className="sm:hidden">
+                <Button variant="outline" size="sm">
+                  <Eye className="w-4 h-4" />
+                </Button>
+              </Link>
+
+              <Link href={`/api/pages/${pageId}`} target="_blank" className="hidden lg:inline-block">
                 <Button variant="outline" size="sm">
                   <Code className="w-4 h-4 mr-2" />
                   API
@@ -443,10 +459,20 @@ export default function EditPagePage() {
                 variant="outline"
                 size="sm"
                 onClick={handleDelete}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hidden sm:inline-flex"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                <Trash2 className="w-4 h-4 lg:mr-2" />
+                <span className="hidden lg:inline">Delete</span>
+              </Button>
+
+              {/* Mobile Delete Icon */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDelete}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 sm:hidden"
+              >
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -502,6 +528,7 @@ export default function EditPagePage() {
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                     placeholder="Enter page title"
+                    autoComplete="off"
                     required
                   />
                 </div>
@@ -521,6 +548,11 @@ export default function EditPagePage() {
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                       className="flex-1 px-4 py-2.5 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                       placeholder="page-url"
+                      inputMode="url"
+                      autoComplete="off"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck="false"
                       required
                     />
                   </div>
@@ -648,17 +680,18 @@ export default function EditPagePage() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="fixed bottom-8 right-8 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:shadow-xl hover:scale-105"
+              className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 inline-flex items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:shadow-xl hover:scale-105"
+              style={{ zIndex: "var(--z-save-button)" }}
             >
               {saving ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Saving...
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                  <span className="text-sm sm:text-base">Saving...</span>
                 </>
               ) : (
                 <>
-                  <Save className="w-5 h-5" />
-                  Save Changes
+                  <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Save</span>
                 </>
               )}
             </button>
@@ -666,12 +699,12 @@ export default function EditPagePage() {
         ) : (
           /* Page Content */
           <div className="max-w-5xl mx-auto">
-            <div className="mb-6 flex justify-between items-center">
+            <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Page Content</h2>
-                <p className="text-gray-600 mt-1">Build your page with sections and blocks</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Page Content</h2>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">Build your page with sections and blocks</p>
               </div>
-              <Button onClick={addSection} size="lg">
+              <Button onClick={addSection} size="lg" className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Section
               </Button>
@@ -702,28 +735,30 @@ export default function EditPagePage() {
                   >
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     {/* Section Header */}
-                    <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <GripVertical className="w-5 h-5 text-gray-400" />
-                          <div>
+                    <div className="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <GripVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
                             <EditableSectionTitle
                               title={section.title}
                               sectionIndex={sectionIndex}
                               onSave={(newTitle) => updateSectionTitle(section.id, newTitle)}
                             />
-                            <p className="text-sm text-gray-500 mt-0.5">
+                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                               {section.blocks.length} {section.blocks.length === 1 ? "block" : "blocks"}
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                          {/* Move buttons - Always visible since drag-and-drop doesn't work on touch */}
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => moveSectionUp(sectionIndex)}
                             disabled={sectionIndex === 0}
                             title="Move section up"
+                            className="px-2"
                           >
                             <ChevronUp className="w-4 h-4" />
                           </Button>
@@ -733,6 +768,7 @@ export default function EditPagePage() {
                             onClick={() => moveSectionDown(sectionIndex)}
                             disabled={sectionIndex === page.sections.length - 1}
                             title="Move section down"
+                            className="px-2"
                           >
                             <ChevronDown className="w-4 h-4" />
                           </Button>
@@ -743,6 +779,7 @@ export default function EditPagePage() {
                               setSelectedSectionId(section.id);
                               setShowTemplateSelector(true);
                             }}
+                            className="hidden md:inline-flex"
                           >
                             <FileText className="w-4 h-4 mr-2" />
                             Insert Template
@@ -751,7 +788,8 @@ export default function EditPagePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => deleteSection(section.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 px-2"
+                            title="Delete section"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -769,12 +807,13 @@ export default function EditPagePage() {
                           }
                         >
                           <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                            <p className="text-gray-600 mb-4">No blocks in this section yet. Drag a block here or add a new one.</p>
-                            <div className="flex flex-wrap justify-center gap-2">
+                            <p className="text-sm sm:text-base text-gray-600 mb-4">No blocks in this section yet. Drag a block here or add a new one.</p>
+                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "text")}
+                                className="w-full sm:w-auto"
                               >
                                 + Text
                               </Button>
@@ -782,6 +821,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "heading")}
+                                className="w-full sm:w-auto"
                               >
                                 + Heading
                               </Button>
@@ -789,6 +829,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "image")}
+                                className="w-full sm:w-auto"
                               >
                                 + Image
                               </Button>
@@ -796,6 +837,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "list")}
+                                className="w-full sm:w-auto"
                               >
                                 + List
                               </Button>
@@ -803,6 +845,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "quote")}
+                                className="w-full sm:w-auto"
                               >
                                 + Quote
                               </Button>
@@ -810,6 +853,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "action")}
+                                className="w-full sm:w-auto"
                               >
                                 + Action
                               </Button>
@@ -817,6 +861,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "video")}
+                                className="w-full sm:w-auto"
                               >
                                 + Video
                               </Button>
@@ -851,12 +896,12 @@ export default function EditPagePage() {
                           {/* Add Block Buttons */}
                           <div className="pt-4 border-t border-gray-200">
                             <p className="text-sm text-gray-600 mb-3">Add a block:</p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "text")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + Text
                               </Button>
@@ -864,7 +909,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "heading")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + Heading
                               </Button>
@@ -872,7 +917,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "image")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + Image
                               </Button>
@@ -880,7 +925,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "list")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + List
                               </Button>
@@ -888,7 +933,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "quote")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + Quote
                               </Button>
@@ -896,7 +941,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "action")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + Action
                               </Button>
@@ -904,7 +949,7 @@ export default function EditPagePage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => addBlock(section.id, "video")}
-                                className="hover:bg-blue-50 hover:border-blue-300"
+                                className="hover:bg-blue-50 hover:border-blue-300 w-full sm:w-auto"
                               >
                                 + Video
                               </Button>

@@ -32,6 +32,16 @@
     --chart-3: 250 80% 60%;
     --chart-4: 290 65% 60%;
     --chart-5: 240 75% 65%;
+
+    /* Z-index scale for consistent stacking */
+    --z-dropdown: 10;
+    --z-sticky: 20;
+    --z-nav-backdrop: 40;
+    --z-editor-sticky: 45;
+    --z-nav-menu: 50;
+    --z-save-button: 55;
+    --z-modal: 60;
+    --z-toast: 70;
   }
 
   .dark {
@@ -71,5 +81,72 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    /* Improve touch targets - minimum 44x44px for mobile */
+    button, a, input, select, textarea {
+      min-height: 44px;
+    }
+
+    /* Smooth scrolling on mobile */
+    html {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent text size adjustment on mobile */
+    body {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* Better tap highlight */
+    * {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* Touch-specific optimizations */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Prevent context menu on long press for draggable elements */
+  .no-touch-callout {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+@layer utilities {
+  /* Mobile navigation animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slideDown {
+    animation: slideDown 0.3s ease-out;
   }
 }
