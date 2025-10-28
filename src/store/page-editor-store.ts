@@ -16,6 +16,7 @@ interface PageEditorState {
   updateBlock: (sectionId: string, blockId: string, data: any) => void;
   addBlock: (sectionId: string, block: any) => void;
   deleteBlock: (sectionId: string, blockId: string) => void;
+  moveBlockBetweenSections: (sourceSectionId: string, targetSectionId: string, blockId: string, targetIndex: number) => void;
   markAsSaved: () => void;
   reset: () => void;
 }
@@ -131,6 +132,35 @@ export const usePageEditorStore = create<PageEditorState>((set) => ({
             ? { ...s, blocks: s.blocks.filter(b => b.id !== blockId) }
             : s
         )
+      },
+      hasUnsavedChanges: true
+    };
+  }),
+
+  moveBlockBetweenSections: (sourceSectionId, targetSectionId, blockId, targetIndex) => set((state) => {
+    if (!state.page) return state;
+
+    // Find the block to move
+    const sourceSection = state.page.sections.find(s => s.id === sourceSectionId);
+    const block = sourceSection?.blocks.find(b => b.id === blockId);
+    if (!block) return state;
+
+    return {
+      page: {
+        ...state.page,
+        sections: state.page.sections.map(s => {
+          if (s.id === sourceSectionId) {
+            // Remove block from source section
+            return { ...s, blocks: s.blocks.filter(b => b.id !== blockId) };
+          } else if (s.id === targetSectionId) {
+            // Add block to target section at the specified index
+            const newBlocks = [...s.blocks];
+            newBlocks.splice(targetIndex, 0, { ...block, order: targetIndex });
+            // Update order for all blocks
+            return { ...s, blocks: newBlocks.map((b, idx) => ({ ...b, order: idx })) };
+          }
+          return s;
+        })
       },
       hasUnsavedChanges: true
     };

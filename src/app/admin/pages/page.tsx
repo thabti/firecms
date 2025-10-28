@@ -17,7 +17,8 @@ export default function PagesPage() {
 
   const fetchPages = async () => {
     try {
-      const data = await apiCall<Page[]>("/api/pages");
+      // Fetch all pages including non-live for admin view
+      const data = await apiCall<Page[]>("/api/pages?includeNonLive=true");
       setPages(data);
     } catch (error) {
       console.error("Error fetching pages:", error);
@@ -36,6 +37,31 @@ export default function PagesPage() {
     } catch (error) {
       console.error("Error deleting page:", error);
       alert("Failed to delete page");
+      fetchPages();
+    }
+  };
+
+  const toggleLiveStatus = async (page: Page) => {
+    const newLiveStatus = !page.live;
+
+    // Optimistically update UI
+    setPages(pages.map(p => p.id === page.id ? { ...p, live: newLiveStatus } : p));
+
+    try {
+      await apiCall(`/api/pages/${page.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: page.title,
+          slug: page.slug,
+          description: page.description,
+          live: newLiveStatus,
+        }),
+      });
+    } catch (error) {
+      console.error("Error updating page status:", error);
+      alert("Failed to update page status");
+      // Revert on error
       fetchPages();
     }
   };
@@ -169,6 +195,9 @@ export default function PagesPage() {
                   Slug
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sections
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -194,6 +223,28 @@ export default function PagesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <code className="text-sm text-gray-600 bg-gray-100 px-2 py-0.5 rounded">/{page.slug}</code>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={page.live}
+                          onChange={() => toggleLiveStatus(page)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                      </label>
+                      {page.live ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                          Live
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          Draft
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-gray-600">

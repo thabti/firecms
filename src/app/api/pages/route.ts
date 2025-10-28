@@ -7,8 +7,13 @@ export async function GET(request: NextRequest) {
   const requestId = getRequestId(request.headers);
 
   try {
+    // Check for includeNonLive query parameter
+    const { searchParams } = new URL(request.url);
+    const includeNonLive = searchParams.get("includeNonLive") === "true";
+    const liveOnly = !includeNonLive; // By default, only return live pages
+
     const adapter = await getStorageAdapter();
-    const pages = await adapter.getPages();
+    const pages = await adapter.getPages(liveOnly);
     return createAPIResponse(pages, { requestId });
   } catch (error) {
     console.error("Error fetching pages:", error);
@@ -25,6 +30,7 @@ export async function POST(request: NextRequest) {
       slug: body.slug,
       title: body.title,
       description: body.description,
+      live: body.live ?? false,
     };
 
     const adapter = await getStorageAdapter();

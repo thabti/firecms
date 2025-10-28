@@ -80,8 +80,15 @@ export class JSONAdapter implements StorageAdapter {
     }
   }
 
-  async getPages(): Promise<Page[]> {
-    return [...this.db.pages].sort(
+  async getPages(liveOnly: boolean = false): Promise<Page[]> {
+    let pages = [...this.db.pages];
+
+    // Filter by live status if requested
+    if (liveOnly) {
+      pages = pages.filter(p => p.live === true);
+    }
+
+    return pages.sort(
       (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
     );
   }
@@ -101,6 +108,7 @@ export class JSONAdapter implements StorageAdapter {
     const newPage: Page = {
       id: crypto.randomUUID(),
       ...data,
+      live: data.live ?? false,
       sections: [],
       version: 1,
       createdAt: now,

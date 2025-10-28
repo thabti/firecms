@@ -18,7 +18,14 @@ export function GlobalSaveButton({ pageId }: GlobalSaveButtonProps) {
 
     setSaving(true);
     try {
-      // Prepare batch operations
+      // Step 1: Save section order if needed
+      await apiCall(`/api/pages/${pageId}/sections/reorder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionIds: page.sections.map(s => s.id) }),
+      });
+
+      // Step 2: Build batch update payload
       const updates: any[] = [];
       const creates: any[] = [];
 
@@ -26,15 +33,15 @@ export function GlobalSaveButton({ pageId }: GlobalSaveButtonProps) {
         for (const block of section.blocks) {
           // Check if this is a new block (has temp ID)
           if (block.id.startsWith('temp-')) {
-            // Create new block
+            // Create new block - remove temp ID and spread all properties
             const { id, ...blockWithoutId } = block;
             creates.push({
               sectionId: section.id,
-              tempId: id,
+              tempId: block.id,
               data: blockWithoutId,
             });
           } else {
-            // Update existing block
+            // Update existing block with its current section ID
             updates.push({
               blockId: block.id,
               sectionId: section.id,
@@ -44,14 +51,14 @@ export function GlobalSaveButton({ pageId }: GlobalSaveButtonProps) {
         }
       }
 
-      // Make single batch API call instead of N individual calls
-      const response = await apiCall(`/api/pages/${pageId}/batch-update`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ updates, creates }),
-      });
-
-      console.log("Batch save completed:", response);
+      // Step 3: Send batch update request
+      if (updates.length > 0 || creates.length > 0) {
+        await apiCall(`/api/pages/${pageId}/batch-update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ updates, creates }),
+        });
+      }
 
       markAsSaved();
 

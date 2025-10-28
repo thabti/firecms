@@ -30,22 +30,15 @@ export async function POST(
       );
     }
 
-    // Reorder sections based on the provided IDs
-    const reorderedSections = sectionIds
-      .map(id => page.sections.find(s => s.id === id))
-      .filter(Boolean);
+    // Update the order property for each section based on its position in the array
+    await Promise.all(
+      sectionIds.map((sectionId, index) =>
+        adapter.updateSection(pageId, sectionId, { order: index })
+      )
+    );
 
-    // Update the order property for each section
-    reorderedSections.forEach((section, index) => {
-      if (section) {
-        section.order = index;
-      }
-    });
-
-    // Update the page with reordered sections
-    const updatedPage = await adapter.updatePage(pageId, {
-      sections: reorderedSections,
-    } as any);
+    // Fetch the updated page to return
+    const updatedPage = await adapter.getPage(pageId);
 
     return NextResponse.json(updatedPage);
   } catch (error) {

@@ -55,10 +55,12 @@ export class SQLiteAdapter implements StorageAdapter {
     return blocks.map((block: any) => serializeBlock(block));
   }
 
-  async getPages(): Promise<Page[]> {
-    const pages = this.db
-      .prepare("SELECT * FROM pages ORDER BY created_at DESC")
-      .all();
+  async getPages(liveOnly: boolean = false): Promise<Page[]> {
+    const query = liveOnly
+      ? "SELECT * FROM pages WHERE live = 1 ORDER BY created_at DESC"
+      : "SELECT * FROM pages ORDER BY created_at DESC";
+
+    const pages = this.db.prepare(query).all();
 
     return pages.map((page: any) => {
       const sections = this.getSectionsForPage(page.id);
@@ -85,17 +87,19 @@ export class SQLiteAdapter implements StorageAdapter {
   async createPage(data: CreatePageInput): Promise<Page> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    const live = data.live ?? false;
 
     this.db
       .prepare(
-        `INSERT INTO pages (id, slug, title, description, version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 1, ?, ?)`
+        `INSERT INTO pages (id, slug, title, description, live, version, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
       )
       .run(
         id,
         data.slug,
         data.title,
         data.description || null,
+        live ? 1 : 0,
         now,
         now
       );
@@ -105,6 +109,7 @@ export class SQLiteAdapter implements StorageAdapter {
       slug: data.slug,
       title: data.title,
       description: data.description,
+      live,
       sections: [],
       version: 1,
       createdAt: new Date(now),

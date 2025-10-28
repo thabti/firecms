@@ -86,6 +86,7 @@ export interface Page {
   title: string;
   description?: string;
   sections: Section[];
+  live: boolean; // Whether the page is live and publicly accessible
   version: number; // Version number for optimistic locking
   createdAt: Date;
   updatedAt: Date;
@@ -115,11 +116,13 @@ export interface CreatePageInput {
   slug: string;
   title: string;
   description?: string;
+  live?: boolean;
 }
 
 export interface UpdatePageInput {
   title?: string;
   description?: string;
+  live?: boolean;
 }
 
 export interface CreateSectionInput {

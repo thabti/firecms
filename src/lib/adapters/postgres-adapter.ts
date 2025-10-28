@@ -90,12 +90,14 @@ export class PostgresAdapter implements StorageAdapter {
     return result.rows.map((block: any) => serializeBlock(block));
   }
 
-  async getPages(): Promise<Page[]> {
+  async getPages(liveOnly: boolean = true): Promise<Page[]> {
     const client = await this.pool.connect();
     try {
-      const result = await client.query(
-        "SELECT * FROM pages ORDER BY created_at DESC"
-      );
+      const query = liveOnly
+        ? "SELECT * FROM pages WHERE live = true ORDER BY created_at DESC"
+        : "SELECT * FROM pages ORDER BY created_at DESC";
+
+      const result = await client.query(query);
 
       const pages = await Promise.all(
         result.rows.map(async (page: any) => {
@@ -147,10 +149,10 @@ export class PostgresAdapter implements StorageAdapter {
     const client = await this.pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO pages (slug, title, description, version)
-         VALUES ($1, $2, $3, 1)
+        `INSERT INTO pages (slug, title, description, live, version)
+         VALUES ($1, $2, $3, $4, 1)
          RETURNING *`,
-        [data.slug, data.title, data.description || null]
+        [data.slug, data.title, data.description || null, data.live ?? false]
       );
 
       const page = result.rows[0];
@@ -174,6 +176,10 @@ export class PostgresAdapter implements StorageAdapter {
       if (data.description !== undefined) {
         updates.push(`description = $${paramCount++}`);
         params.push(data.description);
+      }
+      if (data.live !== undefined) {
+        updates.push(`live = $${paramCount++}`);
+        params.push(data.live);
       }
 
       updates.push(`updated_at = NOW()`, `version = version + 1`);
@@ -315,19 +321,38 @@ export class PostgresAdapter implements StorageAdapter {
       }
 
       const existingData = existing.rows[0].data;
+      const existingSectionId = existing.rows[0].section_id;
       const newData = { ...existingData, ...data };
 
+      // Build dynamic update query
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramCount = 1;
+
+      // Always update data
+      updates.push(`data = $${paramCount++}`);
+      params.push(JSON.stringify(newData));
+
+      // Update order if provided
       if (data.order !== undefined) {
-        await client.query(
-          'UPDATE blocks SET data = $1, "order" = $2 WHERE id = $3',
-          [JSON.stringify(newData), data.order, blockId]
-        );
-      } else {
-        await client.query("UPDATE blocks SET data = $1 WHERE id = $2", [
-          JSON.stringify(newData),
-          blockId,
-        ]);
+        updates.push(`"order" = $${paramCount++}`);
+        params.push(data.order);
       }
+
+      // Update section_id if the block is being moved to a different section
+      if (sectionId !== existingSectionId) {
+        updates.push(`section_id = $${paramCount++}`);
+        params.push(sectionId);
+        // Update timestamp for the old section too
+        await updateSectionTimestamp(client, existingSectionId);
+      }
+
+      params.push(blockId);
+
+      await client.query(
+        `UPDATE blocks SET ${updates.join(", ")} WHERE id = $${paramCount}`,
+        params
+      );
 
       await updateSectionTimestamp(client, sectionId);
       await updatePageTimestamp(client, pageId);

@@ -12,11 +12,12 @@ interface DraggableBlockProps {
   index: number;
   children: ReactNode;
   onReorder: (sourceIndex: number, destinationIndex: number) => void;
+  onMoveToSection?: (sourceSectionId: string, targetSectionId: string, blockId: string, targetIndex: number) => void;
 }
 
 type DragState = "idle" | "dragging" | "over";
 
-export function DraggableBlock({ blockId, sectionId, index, children, onReorder }: DraggableBlockProps) {
+export function DraggableBlock({ blockId, sectionId, index, children, onReorder, onMoveToSection }: DraggableBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<DragState>("idle");
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
@@ -35,10 +36,9 @@ export function DraggableBlock({ blockId, sectionId, index, children, onReorder 
       dropTargetForElements({
         element,
         canDrop: ({ source }) => {
-          // Can only drop within the same section
+          // Can drop blocks from any section (if onMoveToSection is provided) or same section
           return (
             source.data.type === "block" &&
-            source.data.sectionId === sectionId &&
             source.data.blockId !== blockId
           );
         },
@@ -70,24 +70,37 @@ export function DraggableBlock({ blockId, sectionId, index, children, onReorder 
           setClosestEdge(null);
           setDragState("idle");
 
+          const sourceSectionId = source.data.sectionId as string;
+          const sourceBlockId = source.data.blockId as string;
           const sourceIndex = source.data.index as number;
           const destinationIndex = index;
 
-          if (sourceIndex === destinationIndex) return;
+          // Check if moving to a different section
+          if (sourceSectionId !== sectionId && onMoveToSection) {
+            // Cross-section move
+            let finalDestination = destinationIndex;
+            if (edge === "bottom") {
+              finalDestination = destinationIndex + 1;
+            }
+            onMoveToSection(sourceSectionId, sectionId, sourceBlockId, finalDestination);
+          } else if (sourceSectionId === sectionId) {
+            // Same section reorder
+            if (sourceIndex === destinationIndex) return;
 
-          // Calculate the actual destination index based on edge
-          let finalDestination = destinationIndex;
-          if (edge === "bottom") {
-            finalDestination = sourceIndex < destinationIndex ? destinationIndex : destinationIndex + 1;
-          } else if (edge === "top") {
-            finalDestination = sourceIndex < destinationIndex ? destinationIndex - 1 : destinationIndex;
+            // Calculate the actual destination index based on edge
+            let finalDestination = destinationIndex;
+            if (edge === "bottom") {
+              finalDestination = sourceIndex < destinationIndex ? destinationIndex : destinationIndex + 1;
+            } else if (edge === "top") {
+              finalDestination = sourceIndex < destinationIndex ? destinationIndex - 1 : destinationIndex;
+            }
+
+            onReorder(sourceIndex, finalDestination);
           }
-
-          onReorder(sourceIndex, finalDestination);
         },
       })
     );
-  }, [blockId, sectionId, index, onReorder]);
+  }, [blockId, sectionId, index, onReorder, onMoveToSection]);
 
   return (
     <div

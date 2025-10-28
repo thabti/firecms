@@ -15,7 +15,7 @@ import type {
  */
 export interface StorageAdapter {
   // Pages
-  getPages(): Promise<Page[]>;
+  getPages(liveOnly?: boolean): Promise<Page[]>;
   getPage(id: string): Promise<Page | null>;
   getPageBySlug(slug: string): Promise<Page | null>;
   createPage(data: CreatePageInput): Promise<Page>;

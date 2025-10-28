@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   Save, ArrowLeft, Trash2, Plus, FileText, Eye,
   Settings2, Loader2, CheckCircle2, AlertCircle,
-  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, Code
+  GripVertical, ArrowUp, ArrowDown, ChevronUp, ChevronDown, Code, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { apiCall } from "@/lib/api-client";
@@ -15,6 +15,7 @@ import { DraggableSection } from "@/components/draggable-section";
 import { DraggableBlock } from "@/components/draggable-block";
 import { EditableSectionTitle } from "@/components/editable-section-title";
 import { GlobalSaveButton } from "@/components/global-save-button";
+import { SectionDropZone } from "@/components/section-drop-zone";
 import { Button } from "@/components/ui/button";
 import { usePageEditorStore } from "@/store/page-editor-store";
 import type { Page, Section, Block } from "@/types";
@@ -37,6 +38,7 @@ export default function EditPagePage() {
     updateBlock: updateBlockInStore,
     addBlock: addBlockToStore,
     deleteBlock: deleteBlockFromStore,
+    moveBlockBetweenSections,
   } = usePageEditorStore();
 
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ export default function EditPagePage() {
     title: "",
     slug: "",
     description: "",
+    live: false,
   });
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -63,6 +66,7 @@ export default function EditPagePage() {
         title: data.title,
         slug: data.slug,
         description: data.description || "",
+        live: data.live,
       });
     } catch (error) {
       console.error("Error fetching page:", error);
@@ -103,6 +107,11 @@ export default function EditPagePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    // Reload the page from the server, discarding any unsaved changes
+    window.location.reload();
   };
 
   const handleDelete = async () => {
@@ -180,79 +189,40 @@ export default function EditPagePage() {
     }
   };
 
-  const moveSectionUp = async (sectionIndex: number) => {
+  const moveSectionUp = (sectionIndex: number) => {
     if (sectionIndex === 0 || !page) return;
 
     const sections = [...page.sections];
     const [section] = sections.splice(sectionIndex, 1);
     sections.splice(sectionIndex - 1, 0, section);
 
-    // Update store
+    // Update store (will be saved with global save button)
     reorderSectionsInStore(sections);
-
-    try {
-      // Update order on server
-      await apiCall(`/api/pages/${pageId}/sections/reorder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectionIds: sections.map(s => s.id) }),
-      });
-    } catch (error) {
-      console.error("Error reordering sections:", error);
-      showNotification("Failed to reorder section", "error");
-      fetchPage();
-    }
   };
 
-  const moveSectionDown = async (sectionIndex: number) => {
+  const moveSectionDown = (sectionIndex: number) => {
     if (!page || sectionIndex === page.sections.length - 1) return;
 
     const sections = [...page.sections];
     const [section] = sections.splice(sectionIndex, 1);
     sections.splice(sectionIndex + 1, 0, section);
 
-    // Update store
+    // Update store (will be saved with global save button)
     reorderSectionsInStore(sections);
-
-    try {
-      // Update order on server
-      await apiCall(`/api/pages/${pageId}/sections/reorder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectionIds: sections.map(s => s.id) }),
-      });
-    } catch (error) {
-      console.error("Error reordering sections:", error);
-      showNotification("Failed to reorder section", "error");
-      fetchPage();
-    }
   };
 
-  const handleSectionReorder = async (sourceIndex: number, destinationIndex: number) => {
+  const handleSectionReorder = (sourceIndex: number, destinationIndex: number) => {
     if (!page || sourceIndex === destinationIndex) return;
 
     const sections = [...page.sections];
     const [section] = sections.splice(sourceIndex, 1);
     sections.splice(destinationIndex, 0, section);
 
-    // Update store
+    // Update store (will be saved with global save button)
     reorderSectionsInStore(sections);
-
-    try {
-      // Update order on server
-      await apiCall(`/api/pages/${pageId}/sections/reorder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectionIds: sections.map(s => s.id) }),
-      });
-    } catch (error) {
-      console.error("Error reordering sections:", error);
-      showNotification("Failed to reorder section", "error");
-      fetchPage();
-    }
   };
 
-  const handleBlockReorder = async (sectionId: string, sourceIndex: number, destinationIndex: number) => {
+  const handleBlockReorder = (sectionId: string, sourceIndex: number, destinationIndex: number) => {
     if (!page || sourceIndex === destinationIndex) return;
 
     const sectionIndex = page.sections.findIndex(s => s.id === sectionId);
@@ -266,26 +236,11 @@ export default function EditPagePage() {
     const [block] = blocks.splice(sourceIndex, 1);
     blocks.splice(destinationIndex, 0, block);
 
-    // Update store
-    updateSectionInStore(sectionId, { blocks });
+    // Update blocks with new order values
+    const reorderedBlocks = blocks.map((b, index) => ({ ...b, order: index }));
 
-    try {
-      // Update order for all blocks in the section
-      await Promise.all(
-        blocks.map((block, index) =>
-          apiCall(`/api/pages/${pageId}/sections/${sectionId}/blocks/${block.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order: index }),
-          })
-        )
-      );
-    } catch (error) {
-      console.error("Error reordering blocks:", error);
-      showNotification("Failed to reorder block", "error");
-      // Revert on error
-      fetchPage();
-    }
+    // Update store (will be saved with global save button)
+    updateSectionInStore(sectionId, { blocks: reorderedBlocks });
   };
 
   const addBlock = async (sectionId: string, blockType: string) => {
@@ -477,6 +432,16 @@ export default function EditPagePage() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={handleRefresh}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleDelete}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
               >
@@ -578,24 +543,103 @@ export default function EditPagePage() {
                   />
                 </div>
 
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                      <label htmlFor="live-toggle" className="text-sm font-medium text-gray-900 cursor-pointer">
+                        Page Status
+                      </label>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {formData.live ? "Page is live and publicly visible" : "Page is in draft mode"}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="live-toggle"
+                        checked={formData.live}
+                        onChange={(e) => setFormData({ ...formData, live: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                      <span className="ml-3 text-sm font-medium text-gray-900">
+                        {formData.live ? "Live" : "Draft"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-4 border-t border-gray-200">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Save Changes
-                      </>
-                    )}
-                  </button>
+                  {!formData.live ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          setFormData({ ...formData, live: false });
+                          setTimeout(() => {
+                            const form = (e.target as HTMLElement).closest('form');
+                            if (form) form.requestSubmit();
+                          }, 0);
+                        }}
+                        disabled={saving}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Save as Draft
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          setFormData({ ...formData, live: true });
+                          setTimeout(() => {
+                            const form = (e.target as HTMLElement).closest('form');
+                            if (form) form.requestSubmit();
+                          }, 0);
+                        }}
+                        disabled={saving}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Publishing...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Save & Publish
+                          </>
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -718,60 +762,67 @@ export default function EditPagePage() {
                     {/* Section Content */}
                     <div className="p-6">
                       {section.blocks.length === 0 ? (
-                        <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                          <p className="text-gray-600 mb-4">No blocks in this section yet</p>
-                          <div className="flex flex-wrap justify-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "text")}
-                            >
-                              + Text
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "heading")}
-                            >
-                              + Heading
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "image")}
-                            >
-                              + Image
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "list")}
-                            >
-                              + List
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "quote")}
-                            >
-                              + Quote
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "action")}
-                            >
-                              + Action
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addBlock(section.id, "video")}
-                            >
-                              + Video
-                            </Button>
+                        <SectionDropZone
+                          sectionId={section.id}
+                          onDropBlock={(sourceSectionId, targetSectionId, blockId) =>
+                            moveBlockBetweenSections(sourceSectionId, targetSectionId, blockId, 0)
+                          }
+                        >
+                          <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+                            <p className="text-gray-600 mb-4">No blocks in this section yet. Drag a block here or add a new one.</p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "text")}
+                              >
+                                + Text
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "heading")}
+                              >
+                                + Heading
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "image")}
+                              >
+                                + Image
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "list")}
+                              >
+                                + List
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "quote")}
+                              >
+                                + Quote
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "action")}
+                              >
+                                + Action
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addBlock(section.id, "video")}
+                              >
+                                + Video
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        </SectionDropZone>
                       ) : (
                         <>
                           <div className="space-y-4 mb-4">
@@ -782,6 +833,7 @@ export default function EditPagePage() {
                                 sectionId={section.id}
                                 index={index}
                                 onReorder={(src, dest) => handleBlockReorder(section.id, src, dest)}
+                                onMoveToSection={moveBlockBetweenSections}
                               >
                                 <BlockEditor
                                   block={block}
