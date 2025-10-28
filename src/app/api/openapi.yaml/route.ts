@@ -8,11 +8,11 @@ export async function GET(request: NextRequest) {
     const openapiPath = join(process.cwd(), "openapi.yaml");
     const openapiContent = readFileSync(openapiPath, "utf-8");
 
-    // Return as YAML with correct content type
+    // Return as YAML with text/plain to render in browser
     return new NextResponse(openapiContent, {
       status: 200,
       headers: {
-        "Content-Type": "application/x-yaml",
+        "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "public, max-age=3600", // Cache for 1 hour
       },
     });

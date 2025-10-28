@@ -9,6 +9,7 @@ export function serializePage(row: any, sections: Section[]): Page {
     slug: row.slug,
     title: row.title,
     description: row.description,
+    live: row.live === 1 || row.live === true,
     sections,
     version: row.version,
     createdAt: new Date(row.created_at),
