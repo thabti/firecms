@@ -418,7 +418,7 @@ export default function EditPagePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 md:top-0 z-20 shadow-sm">
+      <div className="bg-white border-b border-gray-200 sticky top-16 md:top-0 shadow-sm" style={{ zIndex: "var(--z-editor-sticky)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 md:h-16 items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -563,6 +563,7 @@ export default function EditPagePage() {
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                     placeholder="Enter page title"
+                    autoComplete="off"
                     required
                   />
                 </div>
@@ -582,6 +583,11 @@ export default function EditPagePage() {
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                       className="flex-1 px-4 py-2.5 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                       placeholder="page-url"
+                      inputMode="url"
+                      autoComplete="off"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck="false"
                       required
                     />
                   </div>
@@ -630,7 +636,8 @@ export default function EditPagePage() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 inline-flex items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:shadow-xl hover:scale-105 z-30"
+              className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 inline-flex items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:shadow-xl hover:scale-105"
+              style={{ zIndex: "var(--z-save-button)" }}
             >
               {saving ? (
                 <>
@@ -700,28 +707,27 @@ export default function EditPagePage() {
                           </div>
                         </div>
                         <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                          <div className="flex gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => moveSectionUp(sectionIndex)}
-                              disabled={sectionIndex === 0}
-                              title="Move section up"
-                              className="hidden sm:inline-flex"
-                            >
-                              <ChevronUp className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => moveSectionDown(sectionIndex)}
-                              disabled={sectionIndex === page.sections.length - 1}
-                              title="Move section down"
-                              className="hidden sm:inline-flex"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          {/* Move buttons - Always visible since drag-and-drop doesn't work on touch */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => moveSectionUp(sectionIndex)}
+                            disabled={sectionIndex === 0}
+                            title="Move section up"
+                            className="px-2"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => moveSectionDown(sectionIndex)}
+                            disabled={sectionIndex === page.sections.length - 1}
+                            title="Move section down"
+                            className="px-2"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -738,7 +744,7 @@ export default function EditPagePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => deleteSection(section.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 px-2"
                             title="Delete section"
                           >
                             <Trash2 className="w-4 h-4" />

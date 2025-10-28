@@ -124,11 +124,13 @@ export default function PagesPage() {
       {pages.length > 0 && (
         <div className="mb-6">
           <input
-            type="text"
+            type="search"
             placeholder="Search pages by title or slug..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full sm:max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoComplete="off"
+            enterKeyHint="search"
           />
         </div>
       )}

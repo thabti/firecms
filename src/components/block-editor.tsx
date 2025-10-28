@@ -616,7 +616,7 @@ export function BlockEditor({
               size="sm"
               onClick={onMoveUp}
               title="Move up"
-              className="hidden sm:inline-flex"
+              className="px-2"
             >
               <ChevronUp className="w-4 h-4" />
             </Button>
@@ -628,12 +628,12 @@ export function BlockEditor({
               size="sm"
               onClick={onMoveDown}
               title="Move down"
-              className="hidden sm:inline-flex"
+              className="px-2"
             >
               <ChevronDown className="w-4 h-4" />
             </Button>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={onDelete} title="Delete block">
+          <Button type="button" variant="outline" size="sm" onClick={onDelete} title="Delete block" className="px-2">
             <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
         </div>
