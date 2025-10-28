@@ -18,28 +18,40 @@ export function GlobalSaveButton({ pageId }: GlobalSaveButtonProps) {
 
     setSaving(true);
     try {
-      // Save all blocks in all sections
+      // Prepare batch operations
+      const updates: any[] = [];
+      const creates: any[] = [];
+
       for (const section of page.sections) {
         for (const block of section.blocks) {
           // Check if this is a new block (has temp ID)
           if (block.id.startsWith('temp-')) {
-            // Create new block - remove temp ID and spread all properties
+            // Create new block
             const { id, ...blockWithoutId } = block;
-            await apiCall(`/api/pages/${pageId}/sections/${section.id}/blocks`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(blockWithoutId),
+            creates.push({
+              sectionId: section.id,
+              tempId: id,
+              data: blockWithoutId,
             });
           } else {
-            // Update existing block - spread all properties
-            await apiCall(`/api/pages/${pageId}/sections/${section.id}/blocks/${block.id}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(block),
+            // Update existing block
+            updates.push({
+              blockId: block.id,
+              sectionId: section.id,
+              data: block,
             });
           }
         }
       }
+
+      // Make single batch API call instead of N individual calls
+      const response = await apiCall(`/api/pages/${pageId}/batch-update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates, creates }),
+      });
+
+      console.log("Batch save completed:", response);
 
       markAsSaved();
 

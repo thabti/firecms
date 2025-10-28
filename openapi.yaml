@@ -919,6 +919,154 @@ paths:
                           success:
                             type: boolean
 
+  # Batch Operations
+  /api/pages/{id}/batch-update:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Page ID
+
+    post:
+      tags:
+        - Blocks
+      summary: Batch update blocks
+      description: |
+        Perform multiple block operations (create, update, delete) in a single API call.
+        This significantly reduces API calls and database queries when saving multiple changes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                updates:
+                  type: array
+                  description: Array of block updates
+                  items:
+                    type: object
+                    required:
+                      - blockId
+                      - sectionId
+                      - data
+                    properties:
+                      blockId:
+                        type: string
+                      sectionId:
+                        type: string
+                      data:
+                        $ref: '#/components/schemas/UpdateBlockInput'
+                creates:
+                  type: array
+                  description: Array of block creations
+                  items:
+                    type: object
+                    required:
+                      - sectionId
+                      - tempId
+                      - data
+                    properties:
+                      sectionId:
+                        type: string
+                      tempId:
+                        type: string
+                        description: Client-side temporary ID for mapping response
+                      data:
+                        $ref: '#/components/schemas/CreateBlockInput'
+                deletes:
+                  type: array
+                  description: Array of block deletions
+                  items:
+                    type: object
+                    required:
+                      - blockId
+                      - sectionId
+                    properties:
+                      blockId:
+                        type: string
+                      sectionId:
+                        type: string
+            example:
+              updates:
+                - blockId: "block-123"
+                  sectionId: "section-456"
+                  data:
+                    content: "Updated text content"
+                - blockId: "block-789"
+                  sectionId: "section-456"
+                  data:
+                    level: 3
+                    content: "Updated heading"
+              creates:
+                - sectionId: "section-456"
+                  tempId: "temp-001"
+                  data:
+                    type: "text"
+                    content: "New paragraph"
+              deletes:
+                - blockId: "block-999"
+                  sectionId: "section-456"
+      responses:
+        '200':
+          description: All operations completed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+                          results:
+                            type: object
+                            properties:
+                              updates:
+                                type: array
+                                items:
+                                  type: object
+                              creates:
+                                type: array
+                                items:
+                                  type: object
+                              deletes:
+                                type: array
+                                items:
+                                  type: object
+                          statistics:
+                            type: object
+                            properties:
+                              totalOperations:
+                                type: integer
+                              successfulOperations:
+                                type: integer
+                              failedOperations:
+                                type: integer
+                              updates:
+                                type: integer
+                              creates:
+                                type: integer
+                              deletes:
+                                type: integer
+        '207':
+          description: Multi-Status - Some operations failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # Upload
   /api/upload:
     post:
